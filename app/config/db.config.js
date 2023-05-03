@@ -23,7 +23,8 @@ pool.on('error', (err) => {
   
   pool.connect((err, client, release) => {
     if (err) {
-      console.error('Error connecting to database:', err);
+      console.error('Could Not Able to connect to Posgresql server Due to some reason:');
+      console.log("Error Details =>" , err)
     } else {
       console.log('Connected to database successfully');
       

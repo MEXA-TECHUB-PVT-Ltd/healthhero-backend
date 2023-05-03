@@ -759,7 +759,6 @@ exports.start_workout = async (req, res) => {
 
 }
 
-
 exports.complete_workout = async (req, res) => {
     const client = await pool.connect();
     try {
@@ -804,7 +803,6 @@ exports.complete_workout = async (req, res) => {
       }
 
 }
-
 
 exports.workoutsPlanCompletedByUser= async (req, res) => {
     const client = await pool.connect();

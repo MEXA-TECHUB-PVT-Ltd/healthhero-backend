@@ -44,6 +44,10 @@ app.get("/" , (req,res)=>{
   app.use("/workout_plan", require("./app/routes/Main/workoutPlanRoute"))
   app.use("/countdown", require("./app/routes/Main/countDownRoute"))
   app.use("/restTime", require("./app/routes/Main/restTimeRoute"))
+  app.use("/workout_plan_exersises", require("./app/routes/Main/workoutPlanExersiseRoute"))
+  app.use("/seven_by_four", require("./app/routes/Main/seven_by_fourChallenge"))
+  app.use("/week_goals", require("./app/routes/Main/weekGoalsRoute"))
+  app.use("/user_plans", require("./app/routes/Main/userPlanRoute"))
 
 
 
@@ -52,7 +56,7 @@ app.get("/" , (req,res)=>{
 
 
 //  app.use("/terms_and_condtions" , require("./app/routes/Main/terms_and_conditionsRoute"))
-//  app.use("/privacy_policy" , require("./app/routes/Main/privacy_policyRoute"))
+//  app.use("/privacy_policy" , require"./app/routes/Main/privacy_policyRoute"))
 //  app.use("/about_us" , require("./app/routes/Main/about_usRoute"));
 //  app.use("/faq" , require("./app/routes/Main/faqRoute"))
 
