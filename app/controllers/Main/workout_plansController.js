@@ -1,4 +1,5 @@
 
+const e = require("express");
 const {pool} = require("../../config/db.config");
 
 
@@ -12,6 +13,9 @@ exports.addworkoutPlan = async (req, res) => {
         const focus_area = req.body.focus_area ;
         const paid_status = req.body.paid_status;
         const level_of_workout = req.body.level_of_workout;
+        const time = req.body.time;
+        const calories_burnt = req.body.calories_burnt;
+
 
 
         if(!category_id){
@@ -37,7 +41,7 @@ exports.addworkoutPlan = async (req, res) => {
                 )
             }
         }
-        const query = 'INSERT INTO workout_plans (category_id , workout_title , description , image ,focus_area , paid_status , level_of_workout ) VALUES ($1 , $2 , $3 , $4 , $5 , $6 , $7) RETURNING*'
+        const query = 'INSERT INTO workout_plans (category_id , workout_title , description , image ,focus_area , paid_status , level_of_workout , time , calories_burnt ) VALUES ($1 , $2 , $3 , $4 , $5 , $6 , $7 , $8 , $9) RETURNING*'
         const result = await pool.query(query , 
             [
                 category_id ? category_id : null,
@@ -47,6 +51,8 @@ exports.addworkoutPlan = async (req, res) => {
                 focus_area ? focus_area : null,
                 paid_status ? paid_status : null,
                 level_of_workout ? level_of_workout : null,
+                time ? time : null,
+                calories_burnt ? calories_burnt : null
 
               
             ]);
@@ -92,6 +98,8 @@ exports.updateWorkoutPlans = async (req, res) => {
         const focus_area = req.body.focus_area ;
         const paid_status = req.body.paid_status;
         const level_of_workout = req.body.levellevel_of_workout_of_work;
+        const time = req.body.time;
+        const calories_burnt = req.body.calories_burnt;
 
 
 
@@ -161,7 +169,16 @@ exports.updateWorkoutPlans = async (req, res) => {
             index ++
         }
      
-      
+        if(time){
+            query+= `time = $${index} , `;
+            values.push(time)
+            index ++
+        }
+        if(calories_burnt){
+            query+= `calories_burnt = $${index} , `;
+            values.push(calories_burnt)
+            index ++
+        }
 
         query += 'WHERE workout_plan_id = $1 RETURNING*'
         query = query.replace(/,\s+WHERE/g, " WHERE");
@@ -195,7 +212,6 @@ exports.updateWorkoutPlans = async (req, res) => {
         client.release();
       }
 }
-
 
 exports.deleteWorkoutPlan= async (req, res) => {
     const client = await pool.connect();
@@ -241,7 +257,6 @@ exports.deleteWorkoutPlan= async (req, res) => {
       }
 }
 
-
 exports.getAllWorkoutPlans = async (req, res) => {
     const client = await pool.connect();
     try {
@@ -252,7 +267,20 @@ exports.getAllWorkoutPlans = async (req, res) => {
         let result;
 
         if (!page || !limit) {
-            const query = 'SELECT * FROM workout_plans'
+            const query = `SELECT f.workout_plan_id, 
+            row_to_json(c.*) AS  category_details,
+            f.workout_title, 
+            f.description,
+            f.image,
+            f.focus_area,
+            f.paid_status,
+            f.level_of_workout,
+            f.created_at, 
+            f.updated_at
+            FROM workout_plans f
+            JOIN workout_categories c ON f.category_id = c.workout_category_id
+             GROUP BY f.workout_plan_id, c.workout_category_id;
+            `
             result = await pool.query(query);
            
         }
@@ -261,16 +289,27 @@ exports.getAllWorkoutPlans = async (req, res) => {
             limit = parseInt(limit);
             let offset= (parseInt(page)-1)* limit
 
-        const query = 'SELECT * FROM workout_plans LIMIT $1 OFFSET $2'
-        result = await pool.query(query , [limit , offset]);
-
-      
+        const query = `SELECT f.workout_plan_id, 
+        row_to_json(c.*) AS  category_details,
+        f.workout_title, 
+        f.description,
+        f.image,
+        f.focus_area,
+        f.paid_status,
+        f.level_of_workout,
+        f.created_at, 
+        f.updated_at
+        FROM workout_plans f
+        JOIN workout_categories c ON f.category_id = c.workout_category_id
+         GROUP BY f.workout_plan_id, c.workout_category_id LIMIT $1 OFFSET $2`
+        result = await pool.query(query , [limit , offset]);      
         }
        
         if (result.rows) {
             res.json({
                 message: "Fetched",
                 status: true,
+                count : result.rows.length,
                 result: result.rows
             })
         }
@@ -282,6 +321,7 @@ exports.getAllWorkoutPlans = async (req, res) => {
         }
     }
     catch (err) {
+        console.log(err)
         res.json({
             message: "Error",
             status: false,
@@ -311,10 +351,19 @@ exports.getWorkoutPlanById= async (req, res) => {
         const query = 'SELECT * FROM workout_plans WHERE workout_plan_id = $1'
         const result = await pool.query(query , [workout_plan_id]);
 
+
+        const likesCountQuery = 'SELECT * FROM user_likes_workouts WHERE workout_plan_id = $1 ';
+        const foundLikes = await pool.query(likesCountQuery , [workout_plan_id]);
+        let likesCount ;
+        if(foundLikes){
+            likesCount = foundLikes.rowCount;
+        };
+
         if (result.rowCount>0) {
             res.json({
                 message: "Fetched",
                 status: true,
+                total_likes: likesCount,
                 result: result.rows[0]
             })
         }
@@ -366,6 +415,7 @@ exports.get_for_intermediate = async (req, res) => {
             res.json({
                 message: "Fetched",
                 status: true,
+                count : result.rows.length,
                 result: result.rows
             })
         }
@@ -388,7 +438,6 @@ exports.get_for_intermediate = async (req, res) => {
       }
 
 }
-
 
 exports.get_for_beginners = async (req, res) => {
     const client = await pool.connect();
@@ -418,6 +467,7 @@ exports.get_for_beginners = async (req, res) => {
             res.json({
                 message: "Fetched",
                 status: true,
+                count : result.rows.length,
                 result: result.rows
             })
         }
@@ -469,6 +519,7 @@ exports.get_for_advance = async (req, res) => {
             res.json({
                 message: "Fetched",
                 status: true,
+                count : result.rows.length,
                 result: result.rows
             })
         }
@@ -491,7 +542,6 @@ exports.get_for_advance = async (req, res) => {
       }
 
 }
-
 
 exports.workoutPlansByCategory_id = async (req, res) => {
     const client = await pool.connect();
@@ -700,7 +750,6 @@ exports.checkUserLikeStatusForPlan = async (req, res) => {
 
 }
 
-
 exports.start_workout = async (req, res) => {
     const client = await pool.connect();
     try {
@@ -855,3 +904,215 @@ exports.workoutsPlanCompletedByUser= async (req, res) => {
 
 }
 
+exports.addExersiseToPlan= async (req, res) => {
+    const client = await pool.connect();
+    try {
+        const workout_plan_id  = req.body.workout_plan_id;
+        let array = req.body.array;
+    
+        let resultArray=[]; ;
+
+       for (let i = 0; i < array.length; i++) {
+        const element = array[i];
+        element.workout_plan_id = workout_plan_id
+       }
+
+        const values = array.map(obj => [obj.exersise_id, obj.time, obj.reps , obj.workout_plan_id]);
+        console.log(values)
+
+
+        for (let i = 0; i < values.length; i++) {
+            const element = values[i];
+            
+        let foundQuuery = 'SELECT * FROM workout_plan_exersises WHERE exersise_id= $1 AND workout_plan_id = $2';
+        let foundResult = await pool.query(foundQuuery , [element[0] , element[3]]);
+
+        console.log(foundResult.rows)
+        if(foundResult.rowCount>0){
+            return(res.json({
+                message : `Exersise with exersise_id : ${element[0]} And workout_plan_id : ${element[3]} already exists`,
+                status : 'false'
+            }));
+        }
+            
+        }
+        for (let i = 0; i < values.length; i++) {
+            const element = values[i];
+            let query = 'INSERT INTO workout_plan_exersises (exersise_id , time , reps , workout_plan_id ) VALUES ($1 , $2 , $3 , $4) RETURNING*';
+            let result = await pool.query(query , element);
+            resultArray.push(result.rows[0])
+        }
+       
+        if (resultArray) {
+            res.status(201).json({
+                message: "Exersises saved in database",
+                status: true,
+                result: resultArray
+            })
+        }
+        else {
+            res.status(400).json({
+                message: "Could not save",
+                status: false
+            })
+        }
+
+    }
+    catch (err) {
+        res.json({
+            message: "Error",
+            status: false,
+            error: err.message
+        })
+    }
+    finally {
+        client.release();
+      }
+
+}
+
+exports.getAllExersisesOfWorkoutPlan = async (req, res) => {
+    const client = await pool.connect();
+    try {
+
+        let limit = req.query.limit;
+        let page = req.query.page
+        const workout_plan_id = req.query.workout_plan_id;
+
+        if(!workout_plan_id){
+            return(
+                res.json({
+                    message: "Workout plan id must be provided",
+                    status :false
+                })
+            )
+        }
+        
+        const foundQuery = 'SELECT * FROM workout_plans WHERE workout_plan_id = $1';
+        const foundResult = await pool.query(foundQuery , [workout_plan_id]);
+
+        let workout_out_plan_details = null;
+        if(foundResult.rows[0]){
+            workout_out_plan_details= foundResult.rows[0]
+        }
+
+
+
+
+        let result;
+
+        if (!page || !limit) {
+            const query = `SELECT 
+            workout_plan_exersises.workout_plan_exersise_id, 
+            workout_plan_exersises.exersise_id, 
+            workout_plan_exersises.workout_plan_id, 
+            workout_plan_exersises.reps, 
+            workout_plan_exersises.time, 
+            workout_plan_exersises.created_at, 
+            workout_plan_exersises.updated_at
+          FROM 
+            workout_plan_exersises 
+            JOIN exersises ON workout_plan_exersises.exersise_id = exersises.exersise_id 
+          WHERE 
+            workout_plan_exersises.workout_plan_id =$1;
+            `
+            result = await pool.query(query , [workout_plan_id]);
+           
+        }
+
+        if(page && limit){
+            limit = parseInt(limit);
+            let offset= (parseInt(page)-1)* limit
+
+        const query = `SELECT 
+        workout_plan_exersises.workout_plan_exersise_id, 
+        workout_plan_exersises.exersise_id, 
+        exersises.name AS exersise_name, 
+        workout_plan_exersises.workout_plan_id, 
+        workout_plan_exersises.reps, 
+        workout_plan_exersises.time, 
+        workout_plan_exersises.created_at, 
+        workout_plan_exersises.updated_at
+      FROM 
+        workout_plan_exersises 
+        JOIN exersises ON workout_plan_exersises.exersise_id = exersises.exersise_id 
+      WHERE 
+        workout_plan_exersises.workout_plan_id =$1 LIMIT $1 OFFSET $2`
+        result = await pool.query(query , [limit , offset]);      
+        }
+       
+        if (result.rows) {
+            res.json({
+                message: "Fetched",
+                status: true,
+                result: {
+                    count : result.rows.length,
+                    workout_plan_details : workout_out_plan_details,
+                    exersises : result.rows
+                }
+            })
+        }
+        else {
+            res.json({
+                message: "could not fetch",
+                status: false
+            })
+        }
+    }
+    catch (err) {
+        console.log(err)
+        res.json({
+            message: "Error",
+            status: false,
+            error: err.message
+        })
+    }
+    finally {
+        client.release();
+      }
+
+}
+
+
+exports.deleteAllExersisesOfWorkoutPlan= async (req, res) => {
+    const client = await pool.connect();
+    try {
+        const workout_plan_id = req.query.workout_plan_id;
+        if (!workout_plan_id) {
+            return (
+                res.json({
+                    message: "Please provide workout_plan_id ",
+                    status: false
+                })
+            )
+        }
+
+        const query = 'DELETE FROM workout_plan_exersises WHERE workout_plan_id = $1 RETURNING *';
+        const result = await pool.query(query , [workout_plan_id]);
+
+        if(result.rowCount>0){
+            res.status(200).json({
+                message: "Deletion successfull",
+                status: true,
+                deletedRecords: result.rows
+            })
+        }
+        else{
+            res.status(404).json({
+                message: "Could not delete . Record With this Id may not found or req.body may be empty",
+                status: false,
+            })
+        }
+
+    }
+    catch (err) {
+        res.json({
+            message: "Error",
+            status: false,
+            error: err.message
+        })
+    }
+    finally {
+        client.release();
+      }
+}

@@ -143,6 +143,23 @@ exports.updateProfile= async (req,res)=>{
         const gender = req.body.gender ;
         const focusedAreas = req.body.focusedAreas;
         const device_id = req.body.device_id;
+        const height = req.body.height;
+        const weight = req.body.weight;
+        const height_unit = req.body.height_unit;
+        const weight_unit = req.body.weight_unit;
+
+
+        if(height_unit){
+            if(height_unit == 'in' || height_unit == 'ft'){
+            }
+            else{return(res.json({message: "height unit can only be in or ft" , status :false}))}
+        }
+       
+        if(weight_unit){
+            if(weight_unit == 'kg' || weight_unit == 'gm'){
+            }
+            else{return(res.json({message: "weight unit can only be kg or gm" , status :false}))}
+        }
 
 
         if(gender){
@@ -180,6 +197,27 @@ exports.updateProfile= async (req,res)=>{
         if(device_id){
             query+= `device_id = $${index} , `;
             values.push(device_id)
+            index ++
+        }
+
+        if(height){
+            query+= `height = $${index} , `;
+            values.push(height)
+            index ++
+        }
+        if(weight){
+            query+= `weight = $${index} , `;
+            values.push(weight)
+            index ++
+        }
+        if(height_unit){
+            query+= `height_unit = $${index} , `;
+            values.push(height_unit)
+            index ++
+        }  
+        if(weight_unit){
+            query+= `weight_unit = $${index} , `;
+            values.push(weight_unit)
             index ++
         }
 
@@ -303,6 +341,7 @@ exports.getAllUsers = async (req, res) => {
             res.json({
                 message: "Fetched",
                 status: true,
+                users_counts: result.rows.length,
                 result: result.rows
             })
         }
@@ -401,6 +440,99 @@ exports.updateBlockStatus = async(req,res)=>{
             error: err.message
         })
     }
+}
+
+exports.getUsersByMontsAndYear = async (req, res) => {
+    const client = await pool.connect();
+    try {
+        let limit = req.query.limit;
+        let page = req.query.page
+
+        let result;
+
+        if (!page || !limit) {
+            const query = `SELECT 
+            extract(year from created_at) as year,
+            to_char(created_at, 'MM') as month,
+            COUNT(*) as user_count,
+            array_agg(json_build_object(
+              'user_id', user_id,
+              'user_name', user_name,
+              'email', email,
+              'password', password,
+              'focused_areas', focused_areas,
+              'gender', gender,
+              'device_id', device_id,
+              'block', block,
+              'height', height,
+              'weight', weight,
+              'height_unit', height_unit,
+              'weight_unit', weight_unit,
+              'created_at', created_at,
+              'updated_at', updated_at
+            )) as users
+          FROM users
+          GROUP BY year, month
+          ORDER BY year DESC, month DESC;`
+           result = await pool.query(query);
+        }
+
+        if(page && limit){
+            limit = parseInt(limit);
+            let offset= (parseInt(page)-1)* limit;
+
+            const query = `SELECT 
+            extract(year from created_at) as year,
+            to_char(created_at, 'MM') as month,
+            COUNT(*) as user_count,
+            array_agg(json_build_object(
+              'user_id', user_id,
+              'user_name', user_name,
+              'email', email,
+              'password', password,
+              'focused_areas', focused_areas,
+              'gender', gender,
+              'device_id', device_id,
+              'block', block,
+              'height', height,
+              'weight', weight,
+              'height_unit', height_unit,
+              'weight_unit', weight_unit,
+              'created_at', created_at,
+              'updated_at', updated_at
+            )) as users
+          FROM users
+          GROUP BY year, month
+          ORDER BY year DESC, month DESC LIMIT $1 OFFSET $2`
+            result = await pool.query(query , [limit , offset]);
+        }   
+      
+        if (result.rows) {
+            res.json({
+                message: "Fetched",
+                status: true,
+                users_counts: result.rows.length,
+                result: result.rows
+            })
+        }
+        else {
+            res.json({
+                message: "could not fetch",
+                status: false
+            })
+        }
+    }
+    catch (err) {
+        res.json({
+            message: "Error",
+            status: false,
+            error: err.message
+        })
+    }
+    finally {
+        client.release();
+      }
+
 }
 
 
