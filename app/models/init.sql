@@ -203,3 +203,32 @@ CREATE TABLE IF NOT EXISTS water_tracker_records(
 );
 
 
+CREATE TABLE IF NOT EXISTS SevenByFourChallenge(
+  seven_by_four_challenge_id INT NOT NULL DEFAULT nextval('my_sequence') PRIMARY KEY,
+  name INTEGER,
+  description TEXT,
+  image TEXT,
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW()
+);
+
+
+CREATE TABLE IF NOT EXISTS SevenByFourChallenge_weeks(
+  week_id INT NOT NULL DEFAULT nextval('my_sequence') PRIMARY KEY,
+  seven_by_four_challenge_id INTEGER,
+  week_no INTEGER,
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW()
+);
+
+
+CREATE TABLE IF NOT EXISTS SevenByFourChallenge_week_days(
+  day_id INT NOT NULL DEFAULT nextval('my_sequence') PRIMARY KEY,
+  week_id INTEGER,
+  seven_by_four_challenge_id INTEGER,
+  day INTEGER,
+  exercises INT[],
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW()
+);
+
