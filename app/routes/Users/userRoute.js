@@ -14,6 +14,7 @@ router.put("/updateBlockStatus"  ,  controller.updateBlockStatus)
 router.get("/view_user_profile"  , controller.viewProfile)
 router.get("/getAllUsers"  , controller.getAllUsers)
 router.delete("/deleteUser"  , controller.deleteUser)
+router.get("/getUsersByMonthAndYear"  , controller.getUsersByMontsAndYear)
 
 
 

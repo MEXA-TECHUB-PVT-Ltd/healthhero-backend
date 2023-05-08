@@ -1,5 +1,7 @@
 CREATE SEQUENCE IF NOT EXISTS my_sequence START 3000000;
 
+
+
 CREATE TABLE IF NOT EXISTS users (
   user_id INT NOT NULL DEFAULT nextval('my_sequence') PRIMARY KEY,
   user_name TEXT  ,
@@ -8,8 +10,26 @@ CREATE TABLE IF NOT EXISTS users (
   focused_areas TEXT[],
   gender TEXT,
   device_id TEXT,
-  block BOOLEAN DEFAULT false
+  block BOOLEAN DEFAULT false,
+  height FLOAT ,
+  weight FLOAT ,
+  height_unit TEXT,
+  weight_unit TEXT,
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW()
 );
+
+CREATE TABLE IF NOT EXISTS admins(
+  admin_id INT NOT NULL DEFAULT nextval('my_sequence') PRIMARY KEY,
+  user_name TEXT,
+  password TEXT NOT NULL,
+  email TEXT UNIQUE NOT NULL,
+  img  TEXT,
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW()
+);
+
+
 
 CREATE TABLE IF NOT EXISTS otpStored(
   otp_id INT NOT NULL DEFAULT nextval('my_sequence') PRIMARY KEY ,
@@ -39,13 +59,20 @@ CREATE TABLE IF NOT EXISTS workout_plans(
   updated_at TIMESTAMP DEFAULT NOW()
 );
 
-CREATE TABLE IF NOT EXISTS workoutPlanExersises(
-  workout_plan_exersise_id INT NOT NULL DEFAULT nextval('my_sequence') PRIMARY KEY ,
-  workout_plan_id INTEGER ,
+CREATE TABLE IF NOT EXISTS exersises(
+  exersise_id INT NOT NULL DEFAULT nextval('my_sequence') PRIMARY KEY ,
   title TEXT ,
   description TEXT,
   animation TEXT ,
   video_link TEXT ,
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS workout_plan_exersises(
+  workout_plan_exersise_id INT NOT NULL DEFAULT nextval('my_sequence') PRIMARY KEY ,
+  exersise_id INTEGER,
+  workout_plan_id INT, 
   created_at TIMESTAMP DEFAULT NOW(),
   updated_at TIMESTAMP DEFAULT NOW()
 );
@@ -58,16 +85,6 @@ CREATE TABLE IF NOT EXISTS liked_exersises_of_user(
   updated_at TIMESTAMP DEFAULT NOW()
 );
 
-CREATE TABLE IF NOT EXISTS metric_imperial_units(
-  units_id INT NOT NULL DEFAULT nextval('my_sequence') PRIMARY KEY ,
-  user_id INTEGER,
-  weight INTEGER,
-  weight_unit TEXT,
-  height INTEGER,
-  height_unit TEXT,
-  created_at TIMESTAMP DEFAULT NOW(),
-  updated_at TIMESTAMP DEFAULT NOW()
-);
 
 CREATE TABLE IF NOT EXISTS user_likes_workouts(
   user_like_workout_id INT NOT NULL DEFAULT nextval('my_sequence') PRIMARY KEY ,
@@ -164,3 +181,25 @@ CREATE TABLE IF NOT EXISTS reminder(
   created_at TIMESTAMP DEFAULT NOW(),
   updated_at TIMESTAMP DEFAULT NOW()
 );
+
+CREATE TABLE IF NOT EXISTS water_tracker(
+  water_tracker_id INT NOT NULL DEFAULT nextval('my_sequence') PRIMARY KEY,
+  user_id INTEGER,
+  measure TEXT ,
+  measuring_unit TEXT,
+  quantity INTEGER,
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW()
+);
+
+
+CREATE TABLE IF NOT EXISTS water_tracker_records(
+  water_tracker_record_id INT NOT NULL DEFAULT nextval('my_sequence') PRIMARY KEY,
+  user_id INTEGER,
+  water_tracker_id INTEGER,
+  quantity INTEGER,
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW()
+);
+
+

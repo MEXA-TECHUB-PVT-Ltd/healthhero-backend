@@ -18,10 +18,13 @@ router.get("/checkUserLikeStatusForPlan" , controller.checkUserLikeStatusForPlan
 router.post("/start_workout" , controller.start_workout);
 router.put("/complete_workout" , controller.complete_workout);
 router.get("/workoutsPlanCompletedByUser" , controller.workoutsPlanCompletedByUser);
+router.post("/addExersiseToPlan" , controller.addExersiseToPlan);
+router.get("/getAllExersisesOfWorkoutPlan" , controller.getAllExersisesOfWorkoutPlan);
+router.delete("/deleteAllExersisesOfWorkoutPlan" , controller.deleteAllExersisesOfWorkoutPlan);
 
 
 
-
+//workout plan exersises 
 
 
 module.exports = router;

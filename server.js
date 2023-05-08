@@ -9,8 +9,12 @@ require('dotenv').config()
 // const auth = require('./app/middlewares/auth')
 
 
-//   app.use("/resume_template_images" , express.static("resume_template_images"))
-//   app.use("/user_profile_images" , express.static("user_profile_images"))
+   app.use("/user_profile_images" , express.static("user_profile_images"))
+   app.use("/animations" , express.static("animations"))
+   app.use("/video_links" , express.static("video_links"))
+   app.use("/workout_plan_images" , express.static("workout_plan_images"))
+   app.use("/admin_profile_images" , express.static("admin_profile_images"))
+
   
 const cors = require("cors");
 
@@ -36,8 +40,8 @@ app.get("/" , (req,res)=>{
   res.json("Home Page Server , server is running")
 })
 
-// app.use("/imageUpload", require("./app/routes/ImageUpload/imageUploadRoute"))
-//  app.use("/admin", require("./app/routes/Users/adminRoute"))
+ app.use("/fileUpload", require("./app/routes/ImageUpload/imageUploadRoute"))
+  app.use("/admin", require("./app/routes/Users/adminRoute"))
   app.use("/user", require("./app/routes/Users/userRoute"))
   app.use("/emailVerification", require("./app/routes/EmailVerification/EmailVerificationRoute"))
   app.use("/workout_category", require("./app/routes/Main/workoutCategoryRoute"))
@@ -47,7 +51,12 @@ app.get("/" , (req,res)=>{
   app.use("/workout_plan_exersises", require("./app/routes/Main/workoutPlanExersiseRoute"))
   app.use("/seven_by_four", require("./app/routes/Main/seven_by_fourChallenge"))
   app.use("/week_goals", require("./app/routes/Main/weekGoalsRoute"))
-  app.use("/user_plans", require("./app/routes/Main/userPlanRoute"))
+  app.use("/user_plans", require("./app/routes/Main/userPlanRoute"));
+  app.use("/feedback", require("./app/routes/Main/feedbackRoute"))
+  app.use("/test_voice", require("./app/routes/Main/test_voiceRoute"))
+  app.use("/privacy_policy" , require("./app/routes/Main/privacy_policyRoute"))
+  app.use("/reminder" , require("./app/routes/Main/reminderRoute"))
+  app.use("/water_tracking" , require("./app/routes/Main/water_trackerRoute"))
 
 
 
@@ -56,7 +65,6 @@ app.get("/" , (req,res)=>{
 
 
 //  app.use("/terms_and_condtions" , require("./app/routes/Main/terms_and_conditionsRoute"))
-//  app.use("/privacy_policy" , require"./app/routes/Main/privacy_policyRoute"))
 //  app.use("/about_us" , require("./app/routes/Main/about_usRoute"));
 //  app.use("/faq" , require("./app/routes/Main/faqRoute"))
 
@@ -66,3 +74,10 @@ const server = app.listen(PORT, () => {
 });
 
 
+//for water tracking . 
+// user will add water tracker . only one will be created for one user . user will add quantitiy , and units etc.
+// water tracking details . user will will add its id , water tracker id ,and quantity he consumed . also user automatically actual quantity of that time will be added in record . 
+// along with this date will be also inserted so that we can use it in daily tracking and in history . when user adds record for one date it should be only one and then it will be automatclaly updates
+// 
+// get daily tracking , as input there will be based upon current date . API will get data according to this date with actual quantity and consumed quantity 
+//
