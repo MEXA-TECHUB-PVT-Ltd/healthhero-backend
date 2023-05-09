@@ -6,39 +6,112 @@ const {pool} = require("../../config/db.config");
 exports.addSeven_by_four = async (req, res) => {
     const client = await pool.connect();
     try {
-        const week_no = req.body.week_no;
-        const exersise_ids = req.body.exersise_ids;
+        const name = req.body.name;
+        const description = req.body.description;
+        const image = req.body.image;
 
+        let array = req.body.inputArray;
+        let seven_by_four_challenge_id;
+        let week_id
+        let day_id;
 
+        let week_details;
+        let day_details;
 
-
-        const countQuery = 'SELECT COUNT(*) FROM seven_by_four_challenges';
-        const foundResult = await pool.query(countQuery);
-
-        console.log(foundResult)
-
-        if(parseInt(foundResult.rows[0].count) > 0){
-            return (res.json({
-                message: "Already added seven by four challenge",
-                status : false
-            }))
+        for (let i = 0; i < array.length; i++) {
+            const element = array[i];
+        if(!element.week_no || !element.day || !element.exercises){
+            return(
+                res.json({
+                    message: "week_no,day and exersises(Array) must be passed , It seems in one or many of these array of documents have a problem",
+                    status :false
+                })
+            )
+        }
         }
 
-        const query = 'INSERT INTO seven_by_four_challenges (week_no , exersise_ids) VALUES ($1 , $2) RETURNING*'
-        const result = await pool.query(query , 
-            [
-                week_no ? week_no : null,
-                exersise_ids ? exersise_ids : null
-              
-            ]);
+        const challenge_query = 'INSERT INTO SevenByFourChallenge (name , description , image ) VALUES ($1 ,$2 ,$3) RETURNING *';
+        const challenge_result = await pool.query(challenge_query , [
+            name ? name : null,
+            description ?description : null,
+            image ? image : null
+        ]);
 
 
+        if(challenge_result.rows[0]){
+            if(challenge_result.rows[0].seven_by_four_challenge_id){
+                seven_by_four_challenge_id  = challenge_result.rows[0].seven_by_four_challenge_id;
+            }
+        }
+        else{return(res.json({message : "There is some issue in creating seven_by_fourchallenge" , status : false}))}
+
+
+        if(seven_by_four_challenge_id){
+            for (let i = 0; i < array.length; i++) {
+                const element = array[i];
+                if(element.week_no){
+                    let query= 'INSERT INTO SevenByFourChallenge_weeks (seven_by_four_challenge_id , week_no ) VALUES ($1 , $2 ) RETURNING *';
+                    const result = await pool.query(query , [seven_by_four_challenge_id, element.week_no]);
+
+                    if(result.rows[0]){
+                        week_details= result.rows[0];
+                        if(result.rows[0].week_id){
+                            week_id = result.rows[0].week_id
+                        }
+                    }
+                    else{
+                        let  deletePreviousQuery = 'DELETE FROM SevenByFourChallenge WHERE seven_by_four_challenge_id = $1 RETURNING * ';
+                        if(deletePreviousQuery.rowCount >0){
+                            console.log("previously created seven by challenge also deleted as due to error occurred in weeks");
+                        }
+                        return(
+                            res.json({
+                                message : "Issue Occurred in creating week for this challenge", status :false
+                            })
+                        )
+                    }
+                }
+                
+            }
+        }
+
+
+        if(seven_by_four_challenge_id && week_id){
+            for (let i = 0; i < array.length; i++) {
+                const element = array[i];
+                if(element.day){
+                    let query= 'INSERT INTO SevenByFourChallenge_week_days (week_id , seven_by_four_challenge_id , day , exercises ) VALUES ($1 , $2 , $3 , $4 ) RETURNING *';
+                    const result = await pool.query(query , [week_id, seven_by_four_challenge_id , element.day , element.exercises]);
+                    if(result.rows[0]){
+                        day_details = result.rows[0];
+                        if(result.rows[0].day_id){
+                            day_id = result.rows[0].day_id;
+                        }
+                    }
+                    else{
+                        // let  deletePreviousQuery = 'DELETE FROM SevenByFourChallenge WHERE seven_by_four_challenge_id = $1 RETURNING * ';
+                        // if(deletePreviousQuery.rowCount >0){
+                        //     console.log("previously created seven by challenge also deleted as due to error occurred in weeks");
+                        // }
+                        // return(
+                        //     res.json({
+                        //         message : "Issue Occurred in creating week for this challenge", status :false
+                        //     })
+                        // )
+                    }
+                }
+                
+   
+            }
+        }
             
-        if (result.rows[0]) {
+        if (day_details && week_details && seven_by_four_challenge_id) {
             res.status(201).json({
-                message: "workout category saved in database",
+                message: "7X4 challenge created",
                 status: true,
-                result: result.rows[0]
+                seven_by_four_challenge :challenge_result.rows[0],
+                week_details : week_details ,
+                day_details : day_details,
             })
         }
         else {
