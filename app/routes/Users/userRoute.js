@@ -18,7 +18,9 @@ router.get("/getUsersByMonthAndYear"  , controller.getUsersByMontsAndYear)
 
 
 
-
+router.put("/deleteTemporarily" , controller.deleteTemporarily);
+router.put("/recover_record" , controller.recover_record);
+router.get("/getAllTrashRecords" , controller.getAllTrashRecords);
 
 
 module.exports = router;

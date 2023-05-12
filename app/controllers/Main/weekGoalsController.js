@@ -9,6 +9,12 @@ exports.Addweek_goal = async (req, res) => {
         const no_of_days = req.body.no_of_days;
    
 
+        if(parseInt(no_of_days)>7){
+            return(res.json({
+                message: "no_of_days cannot be greater than 7",
+                status : false
+            }))
+        }
 
         if(!user_id){
             return(
@@ -75,6 +81,14 @@ exports.updateUserWeekGoals = async (req, res) => {
         const user_id = req.body.user_id;
         const no_of_days = req.body.no_of_days;
 
+
+
+        if(parseInt(no_of_days)>7){
+            return(res.json({
+                message: "no_of_days cannot be greater than 7",
+                status : false
+            }))
+        }
 
 
         if (!user_id) {
@@ -183,16 +197,12 @@ exports.setFirstDayOfWeek = async (req, res) => {
         const user_id = req.body.user_id;
         const day = req.body.day;
 
-        if(day=='monday' || day=='tuesday' || day=='wednesday' || day == 'thursday' || day == 'friday' || day == 'saturday' || day == 'sunday'){
 
-        }
-        else{
-            return(
-                res.json({
-                    message: "day must be monday , tuesday ..... till sunday",
-                    status : false
-                })
-            )
+        if(parseInt(day)>7){
+            return(res.json({
+                message: "day cannot be greater than 7",
+                status : false
+            }))
         }
 
         if (!user_id) {
@@ -254,17 +264,13 @@ exports.updateFirstDayOfWeek = async (req, res) => {
         const user_id = req.body.user_id;
         const day = req.body.day;
 
-        if(day=='monday' || day=='tuesday' || day=='wednesday' || day == 'thursday' || day == 'friday' || day == 'saturday' || day == 'sunday'){
+        if(parseInt(day)>7){
+            return(res.json({
+                message: "day cannot be greater than 7",
+                status : false
+            }))
+        }
 
-        }
-        else{
-            return(
-                res.json({
-                    message: "day must be monday , tuesday ..... till sunday",
-                    status : false
-                })
-            )
-        }
 
         if (!user_id) {
             return (
@@ -362,3 +368,5 @@ exports.getFirstDayOfWeek= async (req, res) => {
       }
 
 }
+
+

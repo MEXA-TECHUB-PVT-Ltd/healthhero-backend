@@ -144,8 +144,8 @@ exports.get_reminder= async (req, res) => {
             )
         }
 
-        const query = 'SELECT * FROM reminder WHERE reminder_id = $1'
-        const result = await pool.query(query , [reminder_id]);
+        const query = 'SELECT * FROM reminder WHERE reminder_id = $1 AND trash = $2'
+        const result = await pool.query(query , [reminder_id , false]);
 
         if (result.rowCount>0) {
             res.json({
@@ -193,8 +193,8 @@ exports.getAllUserReminders = async (req, res) => {
         let result;
 
         if (!page || !limit) {
-            const query = 'SELECT * FROM reminder WHERE user_id = $1'
-            result = await pool.query(query , [user_id]);
+            const query = 'SELECT * FROM reminder WHERE user_id = $1 AND trash=$2'
+            result = await pool.query(query , [user_id ,false]);
            
         }
 
@@ -202,8 +202,8 @@ exports.getAllUserReminders = async (req, res) => {
             limit = parseInt(limit);
             let offset= (parseInt(page)-1)* limit
 
-        const query = 'SELECT * FROM reminder WHERE user_id = $3 LIMIT $1 OFFSET $2'
-        result = await pool.query(query , [limit , offset , user_id]);
+        const query = 'SELECT * FROM reminder WHERE user_id = $3 AND trash=$4 LIMIT $1 OFFSET $2'
+        result = await pool.query(query , [limit , offset , user_id , false]);
 
       
         }
@@ -234,6 +234,7 @@ exports.getAllUserReminders = async (req, res) => {
       }
 
 }
+
 exports.deleteReminder = async (req, res) => {
     const client = await pool.connect();
     try {
@@ -260,6 +261,125 @@ exports.deleteReminder = async (req, res) => {
         else{
             res.status(404).json({
                 message: "Could not delete . Record With this Id may not found or req.body may be empty",
+                status: false,
+            })
+        }
+
+    }
+    catch (err) {
+        res.json({
+            message: "Error",
+            status: false,
+            error: err.message
+        })
+    }
+    finally {
+        client.release();
+      }
+}
+
+exports.deleteTemporarily = async (req, res) => {
+    const client = await pool.connect();
+    try {
+        const reminder_id = req.query.reminder_id;
+        if (!reminder_id) {
+            return (
+                res.status(400).json({
+                    message: "Please Provide reminder_id",
+                    status: false
+                })
+            )
+        }
+
+        const query = 'UPDATE reminder SET trash=$2 WHERE reminder_id = $1 RETURNING *';
+        const result = await pool.query(query , [reminder_id , true]);
+
+        if(result.rowCount>0){
+            res.status(200).json({
+                message: "Temporaily Deleted",
+                status: true,
+                Temporarily_deletedRecord: result.rows[0]
+            })
+        }
+        else{
+            res.status(404).json({
+                message: "Could not delete . Record With this Id may not found or req.body may be empty",
+                status: false,
+            })
+        }
+
+    }
+    catch (err) {
+        res.json({
+            message: "Error",
+            status: false,
+            error: err.message
+        })
+    }
+    finally {
+        client.release();
+      }
+}
+ 
+exports.recover_record = async (req, res) => {
+    const client = await pool.connect();
+    try {
+        const reminder_id = req.query.reminder_id;
+        if (!reminder_id) {
+            return (
+                res.status(400).json({
+                    message: "Please Provide reminder_id",
+                    status: false
+                })
+            )
+        }
+        const query = 'UPDATE reminder SET trash=$2 WHERE reminder_id = $1 RETURNING *';
+        const result = await pool.query(query , [reminder_id , false]);
+
+        if(result.rowCount>0){
+            res.status(200).json({
+                message: "Recovered",
+                status: true,
+                recovered_record: result.rows[0]
+            })
+        }
+        else{
+            res.status(404).json({
+                message: "Could not recover . Record With this Id may not found or req.body may be empty",
+                status: false,
+            })
+        }
+
+    }
+    catch (err) {
+        res.json({
+            message: "Error",
+            status: false,
+            error: err.message
+        })
+    }
+    finally {
+        client.release();
+      }
+}
+ 
+exports.getAllTrashRecords = async (req, res) => {
+    const client = await pool.connect();
+    try {
+
+        const query = 'SELECT * FROM reminder WHERE trash = $1';
+        const result = await pool.query(query , [true]);
+
+        if(result.rowCount>0){
+            res.status(200).json({
+                message: "Recovered",
+                status: true,
+                trashed_records: result.rows
+            })
+        }
+        else{
+            res.status(404).json({
+                message: "Could not find trash records",
                 status: false,
             })
         }

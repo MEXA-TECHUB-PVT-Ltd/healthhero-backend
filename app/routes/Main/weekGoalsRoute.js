@@ -1,13 +1,15 @@
 const express = require('express');
 
 const router = express.Router();
-const controller = require("../../controllers/Main/seven_by_four_challengeController")
+const controller = require("../../controllers/Main/weekGoalsController")
 
-router.post("/addSeven_by_four" , controller.addSeven_by_four);
-router.put("/update_sevenByFour" , controller.update_sevenByFour);
-router.delete("/deleteSevenByFour" , controller.deleteSevenByFour);
-router.get("/getSevenByFour" , controller.getSevenByFour);
-router.get("/add_ExersisesInto_7x4" , controller.add_ExersisesInto_7x4);
+router.post("/Addweek_goal" , controller.Addweek_goal);
+router.put("/updateUserWeekGoals" , controller.updateUserWeekGoals);
+router.put("/setFirstDayOfWeek" , controller.setFirstDayOfWeek);
+router.put("/updateFirstDayOfWeek" , controller.updateFirstDayOfWeek);
+router.get("/getDaysOfTraining" , controller.getDaysOfTraining);
+router.get("/getFirstDayOfWeek" , controller.getFirstDayOfWeek);
+
 
 
 module.exports = router;
