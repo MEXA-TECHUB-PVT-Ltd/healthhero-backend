@@ -15,4 +15,9 @@ router.get("/get_user_liked_exersises" , controller.get_user_liked_exersises);
 router.get("/exersise_of_day" , controller.exersise_of_day);
 
 
+router.put("/deleteTemporarily" , controller.deleteTemporarily);
+router.put("/recover_record" , controller.recover_record);
+router.get("/getAllTrashRecords" , controller.getAllTrashRecords);
+
+
 module.exports = router;

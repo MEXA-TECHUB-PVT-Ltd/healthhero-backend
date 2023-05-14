@@ -9,5 +9,8 @@ router.delete("/deleteCategory" , controller.deleteCategory);
 router.get("/getAllcategories" , controller.getAllCategories);
 router.get("/getCategoryById" , controller.getWorkoutCategoryById);
 
+router.put("/deleteTemporarily" , controller.deleteTemporarily);
+router.put("/recover_record" , controller.recover_record);
+router.get("/getAllTrashRecords" , controller.getAllTrashRecords);
 
 module.exports = router;

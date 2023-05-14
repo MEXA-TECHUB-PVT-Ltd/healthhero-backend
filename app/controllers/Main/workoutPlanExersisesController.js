@@ -194,8 +194,8 @@ exports.getAllplanExersise = async (req, res) => {
         let result;
 
         if (!page || !limit) {
-            const query = 'SELECT * FROM exersises'
-            result = await pool.query(query);
+            const query = 'SELECT * FROM exersises WHERE trash = $1'
+            result = await pool.query(query , [false]);
            
         }
 
@@ -203,8 +203,8 @@ exports.getAllplanExersise = async (req, res) => {
             limit = parseInt(limit);
             let offset= (parseInt(page)-1)* limit
 
-        const query = 'SELECT * FROM exersises LIMIT $1 OFFSET $2'
-        result = await pool.query(query , [limit , offset]);
+        const query = 'SELECT * FROM exersises WHERE trash=$3 LIMIT $1 OFFSET $2'
+        result = await pool.query(query , [limit , offset , false]);
 
       
         }
@@ -485,7 +485,6 @@ exports.get_user_liked_exersises = async (req, res) => {
 
 }
 
-
 exports.exersise_of_day= async (req, res) => {
     const client = await pool.connect();
     try {
@@ -493,13 +492,13 @@ exports.exersise_of_day= async (req, res) => {
         const query = `SELECT
         *
         FROM
-        exersises OFFSET floor(random() * (
+        exersises WHERE trash=$1 OFFSET floor(random() * (
             SELECT
                 COUNT(*)
                 FROM exersises))
             LIMIT 1;`;
 
-        const result = await pool.query(query);
+        const result = await pool.query(query , [false]);
 
         if (result.rowCount>0) {
             res.json({
@@ -526,4 +525,126 @@ exports.exersise_of_day= async (req, res) => {
         client.release();
       }
 
+}
+
+//trash 
+
+exports.deleteTemporarily = async (req, res) => {
+    const client = await pool.connect();
+    try {
+        const exersise_id = req.query.exersise_id;
+        if (!exersise_id) {
+            return (
+                res.status(400).json({
+                    message: "Please Provide exersise_id",
+                    status: false
+                })
+            )
+        }
+
+        const query = 'UPDATE exersises SET trash=$2 WHERE exersise_id = $1 RETURNING *';
+        const result = await pool.query(query , [workout_plan_id , true]);
+
+        if(result.rowCount>0){
+            res.status(200).json({
+                message: "Temporaily Deleted",
+                status: true,
+                Temporarily_deletedRecord: result.rows[0]
+            })
+        }
+        else{
+            res.status(404).json({
+                message: "Could not delete . Record With this Id may not found or req.body may be empty",
+                status: false,
+            })
+        }
+
+    }
+    catch (err) {
+        res.json({
+            message: "Error",
+            status: false,
+            error: err.message
+        })
+    }
+    finally {
+        client.release();
+      }
+}
+ 
+exports.recover_record = async (req, res) => {
+    const client = await pool.connect();
+    try {
+        const exersise_id = req.query.exersise_id;
+        if (!exersise_id) {
+            return (
+                res.status(400).json({
+                    message: "Please Provide exersise_id",
+                    status: false
+                })
+            )
+        }
+
+        const query = 'UPDATE exersises SET trash=$2 WHERE exersise_id = $1 RETURNING *';
+        const result = await pool.query(query , [exersise_id , false]);
+
+        if(result.rowCount>0){
+            res.status(200).json({
+                message: "Recovered",
+                status: true,
+                recovered_record: result.rows[0]
+            })
+        }
+        else{
+            res.status(404).json({
+                message: "Could not recover . Record With this Id may not found or req.body may be empty",
+                status: false,
+            })
+        }
+
+    }
+    catch (err) {
+        res.json({
+            message: "Error",
+            status: false,
+            error: err.message
+        })
+    }
+    finally {
+        client.release();
+      }
+}
+ 
+exports.getAllTrashRecords = async (req, res) => {
+    const client = await pool.connect();
+    try {
+
+        const query = 'SELECT * FROM exersises WHERE trash = $1';
+        const result = await pool.query(query , [true]);
+
+        if(result.rowCount>0){
+            res.status(200).json({
+                message: "Recovered",
+                status: true,
+                trashed_records: result.rows
+            })
+        }
+        else{
+            res.status(404).json({
+                message: "Could not find trash records",
+                status: false,
+            })
+        }
+
+    }
+    catch (err) {
+        res.json({
+            message: "Error",
+            status: false,
+            error: err.message
+        })
+    }
+    finally {
+        client.release();
+      }
 }

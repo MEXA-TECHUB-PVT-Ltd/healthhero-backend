@@ -10,6 +10,9 @@ router.put("/removeExersise_in_myPlan" , controller.removeExersise_in_myPlan);
 router.delete("/deleteAllUserPlans" , controller.deleteAllUserPlans);
 router.get("/get_plan" , controller.get_plan);
 router.get("/getAllUserPlans" , controller.getAllUserPlans);
+router.put("/deleteTemporarily" , controller.deleteTemporarily);
+router.put("/recover_record" , controller.recover_record);
+router.get("/getAllTrashRecords" , controller.getAllTrashRecords);
 
 
 module.exports = router;

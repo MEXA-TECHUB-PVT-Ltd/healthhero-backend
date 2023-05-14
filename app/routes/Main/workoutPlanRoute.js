@@ -21,6 +21,14 @@ router.get("/workoutsPlanCompletedByUser" , controller.workoutsPlanCompletedByUs
 router.post("/addExersiseToPlan" , controller.addExersiseToPlan);
 router.get("/getAllExersisesOfWorkoutPlan" , controller.getAllExersisesOfWorkoutPlan);
 router.delete("/deleteAllExersisesOfWorkoutPlan" , controller.deleteAllExersisesOfWorkoutPlan);
+router.get("/getWeekilyReport" , controller.getWeeklyReportOfUser);
+router.get("/search_plan" , controller.searchWorkoutPlan);
+
+
+
+router.put("/deleteTemporarily" , controller.deleteTemporarily);
+router.put("/recover_record" , controller.recover_record);
+router.get("/getAllTrashRecords" , controller.getAllTrashRecords);
 
 
 
