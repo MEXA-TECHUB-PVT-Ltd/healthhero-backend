@@ -57,17 +57,17 @@ exports.update_user_plan = async (req, res) => {
     const client = await pool.connect();
     try {
 
-        const user_plan_id = req.body.user_plan_id;
+        const workout_plan_id = req.body.workout_plan_id;
         const user_id = req.body.user_id;
         const plan_name = req.body.plan_name;
         const description = req.body.description;
 
 
 
-        if (!user_plan_id) {
+        if (!workout_plan_id) {
             return (
                 res.json({
-                    message: "Please provide user_plan_id ",
+                    message: "Please provide workout_plan_id ",
                     status: false
                 })
             )
@@ -77,7 +77,7 @@ exports.update_user_plan = async (req, res) => {
     
         let query = 'UPDATE user_plans SET ';
         let index = 2;
-        let values =[user_plan_id];
+        let values =[workout_plan_id];
 
         
         if(user_id){
@@ -98,7 +98,7 @@ exports.update_user_plan = async (req, res) => {
             index ++
         }
 
-        query += 'WHERE user_plan_id = $1 RETURNING*'
+        query += 'WHERE workout_plan_id = $1 RETURNING*'
         query = query.replace(/,\s+WHERE/g, " WHERE");
         console.log(query);
 
@@ -149,7 +149,7 @@ exports.addExersise_in_myPlan= async (req, res) => {
         }
 
     
-        let query = 'UPDATE user_plans SET exersise_ids = ARRAY_APPEND(exersise_ids , $3) WHERE user_id = $1 AND user_plan_id = $2 RETURNING*';
+        let query = 'UPDATE user_plans SET exersise_ids = ARRAY_APPEND(exersise_ids , $3) WHERE user_id = $1 AND workout_plan_id = $2 RETURNING*';
         let values =[user_id , plan_id , exersise_id ];
 
        const result = await pool.query(query , values);
@@ -198,7 +198,7 @@ exports.removeExersise_in_myPlan= async (req, res) => {
         }
 
     
-        let query = 'UPDATE user_plans SET exersise_ids = ARRAY_REMOVE(exersise_ids , $3) WHERE user_id = $1 AND user_plan_id = $2 RETURNING *';
+        let query = 'UPDATE user_plans SET exersise_ids = ARRAY_REMOVE(exersise_ids , $3) WHERE user_id = $1 AND workout_plan_id = $2 RETURNING *';
         let values =[user_id , plan_id , exersise_id ];
 
        const result = await pool.query(query , values);
@@ -287,7 +287,7 @@ exports.get_plan= async (req, res) => {
             )
         }
 
-        const query = 'SELECT * FROM user_plans WHERE user_id = $1 AND user_plan_id = $2';
+        const query = 'SELECT * FROM user_plans WHERE user_id = $1 AND workout_plan_id = $2';
         const result = await pool.query(query , [user_id , plan_id]);
 
         if(result.rowCount>0){

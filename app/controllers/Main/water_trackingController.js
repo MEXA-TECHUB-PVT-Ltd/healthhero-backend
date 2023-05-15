@@ -391,7 +391,8 @@ exports.get_daily_tracking= async (req, res) => {
         }
         else {
             res.json({
-                message: "could not fetch",
+                message: "No any daily intake water record is added for today",
+                result: null,
                 status: false
             })
         }
@@ -456,7 +457,8 @@ exports.get_weekly_history= async (req, res) => {
         }
         else {
             res.json({
-                message: "could not fetch",
+                message: "No any water record is added for this tracker id ever.",
+                result: null,
                 status: false
             })
         }

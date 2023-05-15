@@ -97,7 +97,7 @@ exports.updateWorkoutPlans = async (req, res) => {
         const image = req.body.image;
         const focus_area = req.body.focus_area;
         const paid_status = req.body.paid_status;
-        const level_of_workout = req.body.levellevel_of_workout_of_work;
+        const level_of_workout = req.body.level_of_workout;
         const time = req.body.time;
         const calories_burnt = req.body.calories_burnt;
 

@@ -180,6 +180,7 @@ exports.getAllCategories = async (req, res) => {
             res.json({
                 message: "Fetched",
                 status: true,
+                count : result.rows.length,
                 result: result.rows
             })
         }
@@ -364,4 +365,52 @@ exports.getAllTrashRecords = async (req, res) => {
     finally {
         client.release();
       }
+}
+
+exports.searchCategory= async (req, res) => {
+    const client = await pool.connect();
+    try {
+        let name = req.query.name;
+
+        if(!name){
+            return(
+                res.json({
+                    message: "name must be provided",
+                    status : false
+                })
+            )
+        }
+
+        const query = `SELECT * FROM workout_categories WHERE category_name ILIKE $1`;
+        let result = await pool.query(query , [name.concat("%")]);
+
+        if(result.rows){
+            result = result.rows
+        }
+       
+        if (result) {
+            res.json({
+                message: "Fetched",
+                status: true,
+                result : result
+            })
+        }
+        else {
+            res.json({
+                message: "could not fetch",
+                status: false
+            })
+        }
+    }
+    catch (err) {
+        res.json({
+            message: "Error",
+            status: false,
+            error: err.message
+        })
+    }
+    finally {
+        client.release();
+      }
+
 }

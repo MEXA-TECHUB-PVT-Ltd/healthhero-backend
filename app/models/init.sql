@@ -81,6 +81,8 @@ CREATE TABLE IF NOT EXISTS workout_plan_exersises(
   workout_plan_exersise_id INT NOT NULL DEFAULT nextval('my_sequence') PRIMARY KEY ,
   exersise_id INTEGER,
   workout_plan_id INT, 
+  reps TEXT,
+  time TEXT,
   trash BOOLEAN DEFAULT false,
   created_at TIMESTAMP DEFAULT NOW(),
   updated_at TIMESTAMP DEFAULT NOW()
