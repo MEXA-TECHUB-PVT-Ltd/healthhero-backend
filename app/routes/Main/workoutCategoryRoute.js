@@ -8,6 +8,8 @@ router.put("/updateCategory" , controller.updateWorkoutCategory);
 router.delete("/deleteCategory" , controller.deleteCategory);
 router.get("/getAllcategories" , controller.getAllCategories);
 router.get("/getCategoryById" , controller.getWorkoutCategoryById);
+router.get("/searchCategory" , controller.searchCategory);
+
 
 router.put("/deleteTemporarily" , controller.deleteTemporarily);
 router.put("/recover_record" , controller.recover_record);

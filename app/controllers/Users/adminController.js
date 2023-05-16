@@ -144,7 +144,7 @@ exports.viewAdminProfile = async(req,res)=>{
             )
         }
 
-        const query = "SELECT * FROM admins WHERE id = $1";
+        const query = "SELECT * FROM admins WHERE admin_id = $1";
 
         const result = await pool.query(query , [admin_id]);
 
