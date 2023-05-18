@@ -38,7 +38,6 @@ pool.on('error', (err) => {
   pool.query(initSql , (err , result)=>{
     if(!err){
       console.log("All Database tables Initialilzed successfully : ")
-      console.log(result)
     }
     else{
       console.log("Error Occurred While Initializing Database tables");

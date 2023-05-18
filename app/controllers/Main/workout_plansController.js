@@ -270,22 +270,50 @@ exports.getAllWorkoutPlans = async (req, res) => {
         let result;
 
         if (!page || !limit) {
-            const query = `SELECT f.workout_plan_id, 
-            row_to_json(c.*) AS  category_details,
-            f.workout_title, 
-            f.description,
-            f.image,
-            f.focus_area,
-            f.paid_status,
-            f.level_of_workout,
-            f.time,
-            f.calories_burnt,
-            f.created_at, 
-            f.updated_at
-            FROM workout_plans f
-            LEFT OUTER JOIN workout_categories c ON f.category_id = c.workout_category_id
-            WHERE f.trash=$1
-             GROUP BY f.workout_plan_id, c.workout_category_id;
+            const query = `SELECT
+            we.workout_plan_id,
+            we.category_id,
+            we.workout_title,
+            we.image,
+            we.focus_area,
+            we.paid_status,
+            we.level_of_workout,
+            we.time,
+            we.calories_burnt,
+            we.trash,
+            we.created_at,
+            we.updated_at,
+            (
+              SELECT json_agg(
+                json_build_object(
+                  'exersise_id', e.exersise_id,
+                  'workout_plan_exersise_id', e.workout_plan_exersise_id,
+                    'reps' , e.reps,
+                    'time' , e.time,
+                    'trash' , e.trash,
+                    'created_at' , e.created_at,
+                    'updated_at' , e.updated_at,
+                    'exersise_details' , (  SELECT 
+                    json_build_object(
+                          'exersise_id', ex.exersise_id,
+                          'title', ex.title,
+                          'description' , ex.description,
+                          'animation' , ex.animation,
+                          'video_link' , ex.video_link,
+                          'trash' , ex.trash,
+                          'created_at' , ex.created_at,
+                          'updated_at' , ex.updated_at
+                      )
+                      FROM exersises ex
+                        WHERE ex.exersise_id = e.exersise_id
+                    )
+                )
+              )
+              FROM workout_plan_exersises e
+              WHERE e.workout_plan_id = we.workout_plan_id
+            ) AS workout_plan_exersises
+                FROM workout_plans we
+                WHERE we.trash = $1;
             `
             result = await pool.query(query , [false]);
 
@@ -295,22 +323,50 @@ exports.getAllWorkoutPlans = async (req, res) => {
             limit = parseInt(limit);
             let offset = (parseInt(page) - 1) * limit
 
-            const query = `SELECT f.workout_plan_id, 
-        row_to_json(c.*) AS  category_details,
-        f.workout_title, 
-        f.description,
-        f.image,
-        f.focus_area,
-        f.paid_status,
-        f.level_of_workout,
-        f.time,
-        f.calories_burnt,
-        f.created_at, 
-        f.updated_at
-        FROM workout_plans f
-        LEFT OUTER JOIN workout_categories c ON f.category_id = c.workout_category_id
-        WHERE f.trash=$3
-        GROUP BY f.workout_plan_id, c.workout_category_id LIMIT $1 OFFSET $2`
+            const query = `SELECT
+            we.workout_plan_id,
+            we.category_id,
+            we.workout_title,
+            we.image,
+            we.focus_area,
+            we.paid_status,
+            we.level_of_workout,
+            we.time,
+            we.calories_burnt,
+            we.trash,
+            we.created_at,
+            we.updated_at,
+            (
+              SELECT json_agg(
+                json_build_object(
+                  'exersise_id', e.exersise_id,
+                  'workout_plan_exersise_id', e.workout_plan_exersise_id,
+                    'reps' , e.reps,
+                    'time' , e.time,
+                    'trash' , e.trash,
+                    'created_at' , e.created_at,
+                    'updated_at' , e.updated_at,
+                    'exersise_details' , (  SELECT 
+                    json_build_object(
+                          'exersise_id', ex.exersise_id,
+                          'title', ex.title,
+                          'description' , ex.description,
+                          'animation' , ex.animation,
+                          'video_link' , ex.video_link,
+                          'trash' , ex.trash,
+                          'created_at' , ex.created_at,
+                          'updated_at' , ex.updated_at
+                      )
+                      FROM exersises ex
+                        WHERE ex.exersise_id = e.exersise_id
+                    )
+                )
+              )
+              FROM workout_plan_exersises e
+              WHERE e.workout_plan_id = we.workout_plan_id
+            ) AS workout_plan_exersises
+                FROM workout_plans we
+                WHERE we.trash = $3 LIMIT $1 OFFSET $2`
             result = await pool.query(query, [limit, offset , false]);
         }
 
@@ -357,7 +413,50 @@ exports.getWorkoutPlanById = async (req, res) => {
             )
         }
 
-        const query = 'SELECT * FROM workout_plans WHERE workout_plan_id = $1'
+        const query = `SELECT
+        we.workout_plan_id,
+        we.category_id,
+        we.workout_title,
+        we.image,
+        we.focus_area,
+        we.paid_status,
+        we.level_of_workout,
+        we.time,
+        we.calories_burnt,
+        we.trash,
+        we.created_at,
+        we.updated_at,
+        (
+          SELECT json_agg(
+            json_build_object(
+              'exersise_id', e.exersise_id,
+              'workout_plan_exersise_id', e.workout_plan_exersise_id,
+                'reps' , e.reps,
+                'time' , e.time,
+                'trash' , e.trash,
+                'created_at' , e.created_at,
+                'updated_at' , e.updated_at,
+                'exersise_details' , (  SELECT 
+                json_build_object(
+                      'exersise_id', ex.exersise_id,
+                      'title', ex.title,
+                      'description' , ex.description,
+                      'animation' , ex.animation,
+                      'video_link' , ex.video_link,
+                      'trash' , ex.trash,
+                      'created_at' , ex.created_at,
+                      'updated_at' , ex.updated_at
+                  )
+                  FROM exersises ex
+                    WHERE ex.exersise_id = e.exersise_id
+                )
+            )
+          )
+          FROM workout_plan_exersises e
+          WHERE e.workout_plan_id = we.workout_plan_id
+        ) AS workout_plan_exersises
+            FROM workout_plans we
+            WHERE we.workout_plan_id = $1`
         const result = await pool.query(query, [workout_plan_id]);
 
 
@@ -574,7 +673,52 @@ exports.workoutPlansByCategory_id = async (req, res) => {
         let result;
 
         if (!page || !limit) {
-            const query = 'SELECT * FROM workout_plans WHERE category_id= $1'
+            const query = `SELECT
+    we.workout_plan_id,
+    we.category_id,
+    we.workout_title,
+    we.image,
+    we.focus_area,
+    we.paid_status,
+    we.level_of_workout,
+    we.time,
+    we.calories_burnt,
+    we.trash,
+    we.created_at,
+    we.updated_at,
+    (
+      SELECT json_agg(
+        json_build_object(
+          'exersise_id', e.exersise_id,
+          'workout_plan_exersise_id', e.workout_plan_exersise_id,
+            'reps' , e.reps,
+            'time' , e.time,
+            'trash' , e.trash,
+            'created_at' , e.created_at,
+            'updated_at' , e.updated_at,
+            'exersise_details' , (  SELECT 
+            json_build_object(
+                  'exersise_id', ex.exersise_id,
+                  'title', ex.title,
+                  'description' , ex.description,
+                  'animation' , ex.animation,
+                  'video_link' , ex.video_link,
+                  'trash' , ex.trash,
+                  'created_at' , ex.created_at,
+                  'updated_at' , ex.updated_at
+              )
+              FROM exersises ex
+                WHERE ex.exersise_id = e.exersise_id
+            )
+        )
+      )
+      FROM workout_plan_exersises e
+      WHERE e.workout_plan_id = we.workout_plan_id
+    ) AS workout_plan_exersises
+  FROM workout_plans we
+  WHERE we.category_id = $1;
+`;
+
             result = await pool.query(query, [category_id]);
 
         }
@@ -583,7 +727,51 @@ exports.workoutPlansByCategory_id = async (req, res) => {
             limit = parseInt(limit);
             let offset = (parseInt(page) - 1) * limit
 
-            const query = 'SELECT * FROM workout_plans WHERE category_id= $3 LIMIT $1 OFFSET $2'
+            const query = `SELECT
+            we.workout_plan_id,
+            we.category_id,
+            we.workout_title,
+            we.image,
+            we.focus_area,
+            we.paid_status,
+            we.level_of_workout,
+            we.time,
+            we.calories_burnt,
+            we.trash,
+            we.created_at,
+            we.updated_at,
+            (
+              SELECT json_agg(
+                json_build_object(
+                  'exersise_id', e.exersise_id,
+                  'workout_plan_exersise_id', e.workout_plan_exersise_id,
+                    'reps' , e.reps,
+                    'time' , e.time,
+                    'trash' , e.trash,
+                    'created_at' , e.created_at,
+                    'updated_at' , e.updated_at,
+                    'exersise_details' , (  SELECT 
+                    json_build_object(
+                          'exersise_id', ex.exersise_id,
+                          'title', ex.title,
+                          'description' , ex.description,
+                          'animation' , ex.animation,
+                          'video_link' , ex.video_link,
+                          'trash' , ex.trash,
+                          'created_at' , ex.created_at,
+                          'updated_at' , ex.updated_at
+                      )
+                      FROM exersises ex
+                        WHERE ex.exersise_id = e.exersise_id
+                    )
+                )
+              )
+              FROM workout_plan_exersises e
+              WHERE e.workout_plan_id = we.workout_plan_id
+            ) AS workout_plan_exersises
+          FROM workout_plans we
+          WHERE we.category_id = $3
+           LIMIT $1 OFFSET $2`
             result = await pool.query(query, [limit, offset, category_id]);
 
         }
@@ -1101,7 +1289,6 @@ exports.getAllExersisesOfWorkoutPlan = async (req, res) => {
 
 }
 
-
 exports.deleteAllExersisesOfWorkoutPlan = async (req, res) => {
     const client = await pool.connect();
     try {
@@ -1498,9 +1685,7 @@ exports.searchWorkoutPlan= async (req, res) => {
       }
 
 }
-
 //trash 
-
 exports.deleteTemporarily = async (req, res) => {
     const client = await pool.connect();
     try {
