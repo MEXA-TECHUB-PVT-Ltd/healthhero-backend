@@ -273,6 +273,17 @@ exports.getAllWorkoutPlans = async (req, res) => {
             const query = `SELECT
             we.workout_plan_id,
             we.category_id,
+            (  SELECT 
+                json_build_object(
+                      'workout_category_id', wcc.workout_category_id,
+                      'category_name', wcc.category_name,
+                      'trash' , wcc.trash,
+                      'created_at' , wcc.created_at,
+                      'updated_at' , wcc.updated_at
+                  )
+                  FROM workout_categories wcc
+                    WHERE wcc.workout_category_id = we.category_id
+                ) AS category_details,
             we.workout_title,
             we.image,
             we.focus_area,
@@ -505,7 +516,50 @@ exports.get_for_intermediate = async (req, res) => {
         let result;
 
         if (!page || !limit) {
-            const query = 'SELECT * FROM workout_plans WHERE level_of_workout=$1 AND trash=$2'
+            const query = `SELECT
+            we.workout_plan_id,
+            we.category_id,
+            we.workout_title,
+            we.image,
+            we.focus_area,
+            we.paid_status,
+            we.level_of_workout,
+            we.time,
+            we.calories_burnt,
+            we.trash,
+            we.created_at,
+            we.updated_at,
+            (
+              SELECT json_agg(
+                json_build_object(
+                  'exersise_id', e.exersise_id,
+                  'workout_plan_exersise_id', e.workout_plan_exersise_id,
+                    'reps' , e.reps,
+                    'time' , e.time,
+                    'trash' , e.trash,
+                    'created_at' , e.created_at,
+                    'updated_at' , e.updated_at,
+                    'exersise_details' , (  SELECT 
+                    json_build_object(
+                          'exersise_id', ex.exersise_id,
+                          'title', ex.title,
+                          'description' , ex.description,
+                          'animation' , ex.animation,
+                          'video_link' , ex.video_link,
+                          'trash' , ex.trash,
+                          'created_at' , ex.created_at,
+                          'updated_at' , ex.updated_at
+                      )
+                      FROM exersises ex
+                        WHERE ex.exersise_id = e.exersise_id
+                    )
+                )
+              )
+              FROM workout_plan_exersises e
+              WHERE e.workout_plan_id = we.workout_plan_id
+            ) AS workout_plan_exersises
+                FROM workout_plans we
+                WHERE we.level_of_workout=$1 AND we.trash=$2`
             result = await pool.query(query, ["intermediate" , false]);
 
         }
@@ -514,7 +568,50 @@ exports.get_for_intermediate = async (req, res) => {
             limit = parseInt(limit);
             let offset = (parseInt(page) - 1) * limit
 
-            const query = 'SELECT * FROM workout_plans WHERE level_of_workout=$3 AND trash=$4 LIMIT $1 OFFSET $2 '
+            const query = `SELECT
+            we.workout_plan_id,
+            we.category_id,
+            we.workout_title,
+            we.image,
+            we.focus_area,
+            we.paid_status,
+            we.level_of_workout,
+            we.time,
+            we.calories_burnt,
+            we.trash,
+            we.created_at,
+            we.updated_at,
+            (
+              SELECT json_agg(
+                json_build_object(
+                  'exersise_id', e.exersise_id,
+                  'workout_plan_exersise_id', e.workout_plan_exersise_id,
+                    'reps' , e.reps,
+                    'time' , e.time,
+                    'trash' , e.trash,
+                    'created_at' , e.created_at,
+                    'updated_at' , e.updated_at,
+                    'exersise_details' , (  SELECT 
+                    json_build_object(
+                          'exersise_id', ex.exersise_id,
+                          'title', ex.title,
+                          'description' , ex.description,
+                          'animation' , ex.animation,
+                          'video_link' , ex.video_link,
+                          'trash' , ex.trash,
+                          'created_at' , ex.created_at,
+                          'updated_at' , ex.updated_at
+                      )
+                      FROM exersises ex
+                        WHERE ex.exersise_id = e.exersise_id
+                    )
+                )
+              )
+              FROM workout_plan_exersises e
+              WHERE e.workout_plan_id = we.workout_plan_id
+            ) AS workout_plan_exersises
+                FROM workout_plans we
+                WHERE we.level_of_workout=$3 AND we.trash=$4 LIMIT $1 OFFSET $2 `
             result = await pool.query(query, [limit, offset, "intermediate", false]);
 
         }
@@ -557,7 +654,50 @@ exports.get_for_beginners = async (req, res) => {
         let result;
 
         if (!page || !limit) {
-            const query = 'SELECT * FROM workout_plans  WHERE level_of_workout=$1  AND trash=$2'
+            const query = `SELECT
+            we.workout_plan_id,
+            we.category_id,
+            we.workout_title,
+            we.image,
+            we.focus_area,
+            we.paid_status,
+            we.level_of_workout,
+            we.time,
+            we.calories_burnt,
+            we.trash,
+            we.created_at,
+            we.updated_at,
+            (
+              SELECT json_agg(
+                json_build_object(
+                  'exersise_id', e.exersise_id,
+                  'workout_plan_exersise_id', e.workout_plan_exersise_id,
+                    'reps' , e.reps,
+                    'time' , e.time,
+                    'trash' , e.trash,
+                    'created_at' , e.created_at,
+                    'updated_at' , e.updated_at,
+                    'exersise_details' , (  SELECT 
+                    json_build_object(
+                          'exersise_id', ex.exersise_id,
+                          'title', ex.title,
+                          'description' , ex.description,
+                          'animation' , ex.animation,
+                          'video_link' , ex.video_link,
+                          'trash' , ex.trash,
+                          'created_at' , ex.created_at,
+                          'updated_at' , ex.updated_at
+                      )
+                      FROM exersises ex
+                        WHERE ex.exersise_id = e.exersise_id
+                    )
+                )
+              )
+              FROM workout_plan_exersises e
+              WHERE e.workout_plan_id = we.workout_plan_id
+            ) AS workout_plan_exersises
+                FROM workout_plans we
+                WHERE we.level_of_workout=$1 AND we.trash=$2`
             result = await pool.query(query, ["beginner" , false]);
 
         }
@@ -566,7 +706,50 @@ exports.get_for_beginners = async (req, res) => {
             limit = parseInt(limit);
             let offset = (parseInt(page) - 1) * limit
 
-            const query = 'SELECT * FROM workout_plans workout_plans  WHERE level_of_workout=$3 AND trash=$4 LIMIT $1 OFFSET $2'
+            const query = `SELECT
+            we.workout_plan_id,
+            we.category_id,
+            we.workout_title,
+            we.image,
+            we.focus_area,
+            we.paid_status,
+            we.level_of_workout,
+            we.time,
+            we.calories_burnt,
+            we.trash,
+            we.created_at,
+            we.updated_at,
+            (
+              SELECT json_agg(
+                json_build_object(
+                  'exersise_id', e.exersise_id,
+                  'workout_plan_exersise_id', e.workout_plan_exersise_id,
+                    'reps' , e.reps,
+                    'time' , e.time,
+                    'trash' , e.trash,
+                    'created_at' , e.created_at,
+                    'updated_at' , e.updated_at,
+                    'exersise_details' , (  SELECT 
+                    json_build_object(
+                          'exersise_id', ex.exersise_id,
+                          'title', ex.title,
+                          'description' , ex.description,
+                          'animation' , ex.animation,
+                          'video_link' , ex.video_link,
+                          'trash' , ex.trash,
+                          'created_at' , ex.created_at,
+                          'updated_at' , ex.updated_at
+                      )
+                      FROM exersises ex
+                        WHERE ex.exersise_id = e.exersise_id
+                    )
+                )
+              )
+              FROM workout_plan_exersises e
+              WHERE e.workout_plan_id = we.workout_plan_id
+            ) AS workout_plan_exersises
+                FROM workout_plans we
+                WHERE we.level_of_workout=$3 AND we.trash=$4 LIMIT $1 OFFSET $2`
             result = await pool.query(query, [limit, offset, 'beginner', false]);
 
         }
@@ -609,7 +792,50 @@ exports.get_for_advance = async (req, res) => {
         let result;
 
         if (!page || !limit) {
-            const query = 'SELECT * FROM workout_plans workout_plans  WHERE level_of_workout=$1 AND trash=$2'
+            const query = `SELECT
+            we.workout_plan_id,
+            we.category_id,
+            we.workout_title,
+            we.image,
+            we.focus_area,
+            we.paid_status,
+            we.level_of_workout,
+            we.time,
+            we.calories_burnt,
+            we.trash,
+            we.created_at,
+            we.updated_at,
+            (
+              SELECT json_agg(
+                json_build_object(
+                  'exersise_id', e.exersise_id,
+                  'workout_plan_exersise_id', e.workout_plan_exersise_id,
+                    'reps' , e.reps,
+                    'time' , e.time,
+                    'trash' , e.trash,
+                    'created_at' , e.created_at,
+                    'updated_at' , e.updated_at,
+                    'exersise_details' , (  SELECT 
+                    json_build_object(
+                          'exersise_id', ex.exersise_id,
+                          'title', ex.title,
+                          'description' , ex.description,
+                          'animation' , ex.animation,
+                          'video_link' , ex.video_link,
+                          'trash' , ex.trash,
+                          'created_at' , ex.created_at,
+                          'updated_at' , ex.updated_at
+                      )
+                      FROM exersises ex
+                        WHERE ex.exersise_id = e.exersise_id
+                    )
+                )
+              )
+              FROM workout_plan_exersises e
+              WHERE e.workout_plan_id = we.workout_plan_id
+            ) AS workout_plan_exersises
+                FROM workout_plans we
+                WHERE we.level_of_workout=$1 AND we.trash=$2`
             result = await pool.query(query, ["advance" , false]);
 
         }
@@ -618,7 +844,50 @@ exports.get_for_advance = async (req, res) => {
             limit = parseInt(limit);
             let offset = (parseInt(page) - 1) * limit
 
-            const query = 'SELECT * FROM workout_plans workout_plans  WHERE level_of_workout=$3 AND trash=$4 LIMIT $1 OFFSET $2'
+            const query = `SELECT
+            we.workout_plan_id,
+            we.category_id,
+            we.workout_title,
+            we.image,
+            we.focus_area,
+            we.paid_status,
+            we.level_of_workout,
+            we.time,
+            we.calories_burnt,
+            we.trash,
+            we.created_at,
+            we.updated_at,
+            (
+              SELECT json_agg(
+                json_build_object(
+                  'exersise_id', e.exersise_id,
+                  'workout_plan_exersise_id', e.workout_plan_exersise_id,
+                    'reps' , e.reps,
+                    'time' , e.time,
+                    'trash' , e.trash,
+                    'created_at' , e.created_at,
+                    'updated_at' , e.updated_at,
+                    'exersise_details' , (  SELECT 
+                    json_build_object(
+                          'exersise_id', ex.exersise_id,
+                          'title', ex.title,
+                          'description' , ex.description,
+                          'animation' , ex.animation,
+                          'video_link' , ex.video_link,
+                          'trash' , ex.trash,
+                          'created_at' , ex.created_at,
+                          'updated_at' , ex.updated_at
+                      )
+                      FROM exersises ex
+                        WHERE ex.exersise_id = e.exersise_id
+                    )
+                )
+              )
+              FROM workout_plan_exersises e
+              WHERE e.workout_plan_id = we.workout_plan_id
+            ) AS workout_plan_exersises
+                FROM workout_plans we
+                WHERE we.level_of_workout=$3 AND we.trash=$4 LIMIT $1 OFFSET $2`
             result = await pool.query(query, [limit, offset, 'advance' , false]);
 
         }
@@ -1806,6 +2075,132 @@ exports.getAllTrashRecords = async (req, res) => {
       }
 }
 
+exports.restartProgress = async (req, res) => {
+    const client = await pool.connect();
+    try {
+
+        const user_id = req.query.user_id;
+        if(!user_id){
+            return(
+                res.json({
+                    message: "must provide user_id",
+                    status : false
+                })
+            )
+        }
+
+
+        const query = 'DELETE FROM user_inActionWorkouts WHERE user_id = $1 RETURNING*';
+        const result = await pool.query(query , [user_id]);
+
+        if(result.rowCount>0){
+            res.status(200).json({
+                message: "DELETED , Progress restarted",
+                status: true,
+            })
+        }
+        else{
+            res.status(404).json({
+                message: "Could not Restart progress",
+                status: false,
+            })
+        }
+
+    }
+    catch (err) {
+        res.json({
+            message: "Error",
+            status: false,
+            error: err.message
+        })
+    }
+    finally {
+        client.release();
+      }
+}
+
+exports.review_on_workout = async (req, res) => {
+    const client = await pool.connect();
+    try {
+
+        const user_id = req.body.user_id;
+        const workout_plan_id = req.body.workout_plan_id;
+        const review = req.body.review;
+
+
+        if(!user_id || !workout_plan_id || !review){
+            return(
+                res.json({
+                    message: "must provide user_id , review , workout_plan_id",
+                    status : false
+                })
+            )
+        }
+
+
+        const query = 'INSERT INTO workout_reviews(user_id , workout_plan_id , review) VALUES ($1 , $2 ,$3) RETURNING*';
+        const result = await pool.query(query , [user_id , workout_plan_id , review]);
+
+        if(result.rowCount>0){
+            res.status(200).json({
+                message: "Review Recorded",
+                status: true,
+                result: result.rows[0]
+            })
+        }
+        else{
+            res.status(404).json({
+                message: "Could not add your review",
+                status: false,
+            })
+        }
+
+    }
+    catch (err) {
+        res.json({
+            message: "Error",
+            status: false,
+            error: err.message
+        })
+    }
+    finally {
+        client.release();
+      }
+}
+
+exports.getReviewsOfWorkoutPlan = async (req, res) => {
+    const client = await pool.connect();
+    try {
+        const workout_plan_id = req.query.workout_plan_id;
+        const query = 'SELECT * FROM workout_reviews WHERE workout_plan_id = $1';
+        const result = await pool.query(query , [workout_plan_id]);
+
+        if(result.rowCount>0){
+            res.status(200).json({
+                message: "Fetched",
+                status: true,
+                result: result.rows
+            })
+        }
+        else{
+            res.status(404).json({
+                message: "Could not find",
+                status: false,
+            })
+        }
+
+    }
+    catch (err) {
+        res.json({
+            message: "Error",
+            status: false,
+            error: err.message
+        })
+    }
+    finally {
+        client.release();
+      }
+}
 
 function getStartDateOfWeek(date, day_no , startDayOfWeek=1) {
     const startDate = new Date(date);

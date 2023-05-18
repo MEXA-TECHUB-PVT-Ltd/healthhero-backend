@@ -295,3 +295,20 @@ CREATE TABLE IF NOT EXISTS user_subscription(
   created_at TEXT
 );
 
+CREATE TABLE IF NOT EXISTS feedbacks(
+  feedback_id INT NOT NULL DEFAULT nextval('my_sequence') PRIMARY KEY,
+  user_id INTEGER,
+  feedback TEXT,
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS workout_reviews(
+  workout_review_id INT NOT NULL DEFAULT nextval('my_sequence') PRIMARY KEY,
+  user_id INTEGER,
+  review TEXT,
+  workout_plan_id INT,
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW()
+);
+

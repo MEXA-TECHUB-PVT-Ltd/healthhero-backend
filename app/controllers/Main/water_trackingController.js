@@ -600,3 +600,46 @@ exports.getAllTrashRecords = async (req, res) => {
         client.release();
       }
 }
+
+exports.getUser_waterTracker = async (req, res) => {
+    const client = await pool.connect();
+    try {
+
+        const user_id = req.query.user_id;
+        if(!user_id){
+            return(
+                res.json({
+                    message : "please provide user_id",
+                    status : false
+                })
+            )
+        }
+        const query = 'SELECT * FROM water_tracker WHERE user_id = $1 AND trash = $2';
+        const result = await pool.query(query , [user_id , false]);
+
+        if(result.rowCount>0){
+            res.status(200).json({
+                message: "Fetched",
+                status: true,
+                result: result.rows[0]
+                })
+        }
+        else{
+            res.status(404).json({
+                message: "Could not find",
+                status: false,
+            })
+        }
+
+    }
+    catch (err) {
+        res.json({
+            message: "Error",
+            status: false,
+            error: err.message
+        })
+    }
+    finally {
+        client.release();
+      }
+}
