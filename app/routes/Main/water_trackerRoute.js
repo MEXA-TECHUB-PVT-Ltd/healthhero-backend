@@ -13,6 +13,9 @@ router.get("/get_weekly_history" , controller.get_weekly_history);
 router.put("/deleteTemporarily" , controller.deleteTemporarily);
 router.put("/recover_record" , controller.recover_record);
 router.get("/getAllTrashRecords" , controller.getAllTrashRecords);
+router.get("/getUser_waterTracker" , controller.getUser_waterTracker);
+
+
 
 
 module.exports = router;

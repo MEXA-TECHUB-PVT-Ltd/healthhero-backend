@@ -23,6 +23,12 @@ router.get("/getAllExersisesOfWorkoutPlan" , controller.getAllExersisesOfWorkout
 router.delete("/deleteAllExersisesOfWorkoutPlan" , controller.deleteAllExersisesOfWorkoutPlan);
 router.get("/getWeekilyReport" , controller.getWeeklyReportOfUser);
 router.get("/search_plan" , controller.searchWorkoutPlan);
+router.get("/restartProgress" , controller.restartProgress);
+router.post("/review_on_workout" , controller.review_on_workout);
+router.get("/getReviewsOfWorkoutPlan" , controller.getReviewsOfWorkoutPlan);
+
+
+
 
 
 
