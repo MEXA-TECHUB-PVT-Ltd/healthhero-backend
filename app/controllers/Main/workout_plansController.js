@@ -1,4 +1,5 @@
 
+const { json } = require("body-parser");
 const { pool } = require("../../config/db.config");
 var moment = require('moment');
 
@@ -15,13 +16,14 @@ exports.addworkoutPlan = async (req, res) => {
         const level_of_workout = req.body.level_of_workout;
         const time = req.body.time;
         const calories_burnt = req.body.calories_burnt;
+        const created_at  = req.body.created_at;
 
 
 
-        if (!category_id) {
+        if (!category_id || !created_at || !calories_burnt || !time) {
             return (
                 res.json({
-                    message: "Must provide category_id",
+                    message: "Must provide category_i, calories_burnt , time ,created_at",
                     status: false
                 })
             )
@@ -41,7 +43,7 @@ exports.addworkoutPlan = async (req, res) => {
                 )
             }
         }
-        const query = 'INSERT INTO workout_plans (category_id , workout_title , description , image ,focus_area , paid_status , level_of_workout , time , calories_burnt ) VALUES ($1 , $2 , $3 , $4 , $5 , $6 , $7 , $8 , $9) RETURNING*'
+        const query = 'INSERT INTO workout_plans (category_id , workout_title , description , image ,focus_area , paid_status , level_of_workout , time , calories_burnt , created_at) VALUES ($1 , $2 , $3 , $4 , $5 , $6 , $7 , $8 , $9 , $10) RETURNING*'
         const result = await pool.query(query,
             [
                 category_id ? category_id : null,
@@ -52,7 +54,8 @@ exports.addworkoutPlan = async (req, res) => {
                 paid_status ? paid_status : null,
                 level_of_workout ? level_of_workout : null,
                 time ? time : null,
-                calories_burnt ? calories_burnt : null
+                calories_burnt ? calories_burnt : null,
+                created_at ? created_at : null
 
 
             ]);
@@ -761,11 +764,13 @@ exports.start_workout = async (req, res) => {
     try {
         const user_id = req.body.user_id;
         const workout_plan_id = req.body.workout_plan_id;
+        const time = req.body.time;
+        const created_at = req.body.created_at;
 
-        if (!user_id || !workout_plan_id) {
+        if (!user_id || !workout_plan_id || !time || !created_at) {
             return (
                 res.json({
-                    message: "user_id and workout_plan_id must be provided",
+                    message: "user_id and workout_plan_id and time and created_at must be provided",
                     status: false
                 })
             )
@@ -784,8 +789,8 @@ exports.start_workout = async (req, res) => {
             )
         }
 
-        const query = 'INSERT INTO user_inActionWorkouts (user_id , workout_plan_id , status) VALUES ($1 , $2 , $3) RETURNING*';
-        const result = await pool.query(query, [user_id, workout_plan_id, "inprogress"]);
+        const query = 'INSERT INTO user_inActionWorkouts (user_id , workout_plan_id , status , time , created_at) VALUES ($1 , $2 , $3 , $4 , $5) RETURNING*';
+        const result = await pool.query(query, [user_id, workout_plan_id, "inprogress" , time ,created_at]);
 
         if (result.rows[0]) {
             res.json({
@@ -831,12 +836,29 @@ exports.complete_workout = async (req, res) => {
 
         const query = 'UPDATE user_inActionWorkouts SET status = $1 WHERE user_inaction_workout_id = $2 RETURNING*';
         const result = await pool.query(query, ["completed", user_inaction_workout_id]);
+        console.log(result.rows)
+
+        let record = null;
+        if(result.rows){
+            if(result.rows[0]){
+                if(result.rows[0].workout_plan_id){
+                    const workout_planQuery = 'SELECT * FROM workout_plans WHERE workout_plan_id = $1';
+                    const foundResult = await pool.query(workout_planQuery , [result.rows[0].workout_plan_id]);
+                    record = foundResult.rows[0];
+                }
+            }
+        }
+       
+       
 
         if (result.rows[0]) {
             res.json({
                 message: "Updated Staus to completed",
                 status: true,
-                result: result.rows[0]
+                result: {
+                    record : result.rows[0],
+                    workout_plan_details : record
+                }
             })
         }
         else {
@@ -1128,10 +1150,33 @@ exports.getWeeklyReportOfUser = async (req, res) => {
 
     try {
         const user_id = req.query.user_id;
-        let date = req.query.date;
+        let date ;
 
+        const getStartDateQuery = 'SELECT * FROM  user_inActionWorkouts WHERE user_id = $1 '
+        const getStartDate = await pool.query(getStartDateQuery , [user_id]);
+        console.log(getStartDate.rows)
+        
+        if(getStartDate.rows[0]){
+            if(getStartDate.rows[0].created_at){
+                console.log("start date found",getStartDate.rows[0].created_at);
+            date = getStartDate.rows[0].created_at;
+            date = new Date(date);
+            console.log(date)
 
-        date = new Date(date);
+            }
+            else{
+                return(
+                    res.json({
+                        message: "Could not find any started workout for this user",
+                        status : false,
+                        resutl : null
+                    })
+                )
+            }
+
+            
+        }
+        
 
         const dayNoQuery= 'SELECT * FROM week_goals WHERE user_id = $1';
         const day_no_result = await pool.query(dayNoQuery , [user_id]);
@@ -1162,6 +1207,7 @@ exports.getWeeklyReportOfUser = async (req, res) => {
 
 
         let startDate = getStartDateOfWeek(date, day_no);
+        console.log(startDate+ "hasfhro")
         const endDate = new Date(startDate.getTime() + 7 * 24 * 60 * 60 * 1000);
 
         console.log(`Start date of the week: ${startDate}`);
@@ -1173,95 +1219,95 @@ exports.getWeeklyReportOfUser = async (req, res) => {
 
         current_date = moment(current_date).format('YYYY-MM-DD')
 
-        console.log(startDate);
+        console.log("start Date",startDate);
         console.log(current_date)
 
 
 
         const query = `SELECT 
-        DATE_TRUNC('week', date_trunc('day', uiw.created_at)) AS week_start_date,
-        DATE_TRUNC('week', date_trunc('day', uiw.created_at)) + INTERVAL '6 days' AS week_end_date,
-        array_agg(json_build_object(
-            'user_inAction_workout_id', uiw.user_inAction_workout_id,
-            'user_id', uiw.user_id,
-            'workout_plan', COALESCE(
-                (
-                    SELECT  json_build_object(
-                        'workout_plan_id' , wp.workout_plan_id,
-                        'category_id' , wp.category_id,
-                        'workout_title' , wp.workout_title,
-                        'description' , wp.description,
-                        'image' , wp.image,
-                        'focus_area' , wp.focus_area,
-                        'paid_status' , wp.paid_status,
-                        'level_of_workout' , wp.level_of_workout,
-                        'time' , wp.time ,
-                        'calories_burnt' , wp.calories_burnt,
-                        'added_by', 'admin',
-                        'created_at' , wp.created_at,
-                        'updated_at' , wp.updated_at,
-                        'workout_plan_exercises' , (
-                            SELECT json_agg(
-                                json_build_object(
-                                    'exersise_id', e.exersise_id,
-                                     'title', e.title,
-                                    'description', e.description,
-                                    'animation', e.animation,
-                                    'video_link', e.video_link,
-                                    'created_at', e.created_at
-                                )
+    DATE_TRUNC('week', date_trunc('day', TO_TIMESTAMP(uiw.created_at, 'YYYY-MM-DD HH24:MI:SS'))) AS week_start_date,
+    DATE_TRUNC('week', date_trunc('day', TO_TIMESTAMP(uiw.created_at, 'YYYY-MM-DD HH24:MI:SS'))) + INTERVAL '6 days' AS week_end_date,
+    array_agg(json_build_object(
+        'user_inAction_workout_id', uiw.user_inAction_workout_id,
+        'user_id', uiw.user_id,
+        'workout_plan', COALESCE(
+            (
+                SELECT  json_build_object(
+                    'workout_plan_id' , wp.workout_plan_id,
+                    'category_id' , wp.category_id,
+                    'workout_title' , wp.workout_title,
+                    'description' , wp.description,
+                    'image' , wp.image,
+                    'focus_area' , wp.focus_area,
+                    'paid_status' , wp.paid_status,
+                    'level_of_workout' , wp.level_of_workout,
+                    'time' , wp.time ,
+                    'calories_burnt' , wp.calories_burnt,
+                    'added_by', 'admin',
+                    'created_at' , wp.created_at,
+                    'updated_at' , wp.updated_at,
+                    'workout_plan_exercises' , (
+                        SELECT json_agg(
+                            json_build_object(
+                                'exersise_id', e.exersise_id,
+                                'title', e.title,
+                                'description', e.description,
+                                'animation', e.animation,
+                                'video_link', e.video_link,
+                                'created_at', e.created_at
                             )
-                            FROM exersises e
-                            JOIN workout_plan_exersises wpe ON e.exersise_id = wpe.exersise_id
-                            WHERE wpe.workout_plan_id = wp.workout_plan_id
                         )
-                    ) 
-                    FROM workout_plans wp 
-                    WHERE wp.workout_plan_id = uiw.workout_plan_id
-                ),
-                (
-                    SELECT  json_build_object(
-                        'workout_plan_id' , up.workout_plan_id,
-                        'plan_name' , up.plan_name,
-                        'description' , up.description,
-                        'workout_plan_exercises', (
-                            SELECT json_agg(
-                                         json_build_object(
-                                             'exersise_id', e.exersise_id,
-                                             'title', e.title,
-                                             'description', e.description,
-                                             'animation', e.animation,
-                                             'video_link', e.video_link,
-                                             'created_at', e.created_at
-                                         )
-                                     )
-                            FROM exersises e
-                            WHERE e.exersise_id = ANY(up.exersise_ids)
-                        ),
-                        'status' , up.status,
-                        'added_by' , 'user',
-                        'created_at' , up.created_at,
-                        'updated_at' , up.updated_at
-                    ) 
-                    FROM user_plans up 
-                    WHERE up.workout_plan_id = uiw.workout_plan_id
-                )
+                        FROM exersises e
+                        JOIN workout_plan_exersises wpe ON e.exersise_id = wpe.exersise_id
+                        WHERE wpe.workout_plan_id = wp.workout_plan_id
+                    )
+                ) 
+                FROM workout_plans wp 
+                WHERE wp.workout_plan_id = uiw.workout_plan_id
             ),
-            'status', uiw.status,
-            'completed_at', uiw.completed_at,
-            'created_at', uiw.created_at,
-            'updated_at', uiw.updated_at
-        )) AS records
-    FROM 
-        user_inActionWorkouts uiw
+            (
+                SELECT  json_build_object(
+                    'workout_plan_id' , up.workout_plan_id,
+                    'plan_name' , up.plan_name,
+                    'description' , up.description,
+                    'workout_plan_exercises', (
+                        SELECT json_agg(
+                                     json_build_object(
+                                         'exersise_id', e.exersise_id,
+                                         'title', e.title,
+                                         'description', e.description,
+                                         'animation', e.animation,
+                                         'video_link', e.video_link,
+                                         'created_at', e.created_at
+                                     )
+                                 )
+                        FROM exersises e
+                        WHERE e.exersise_id = ANY(up.exersise_ids)
+                    ),
+                    'status' , up.status,
+                    'added_by' , 'user',
+                    'created_at' , up.created_at,
+                    'updated_at' , up.updated_at
+                ) 
+                FROM user_plans up 
+                WHERE up.workout_plan_id = uiw.workout_plan_id
+            )
+        ),
+        'status', uiw.status,
+        'time' , uiw.time,
+        'completed_at', uiw.completed_at,
+        'created_at', uiw.created_at,
+        'updated_at', uiw.updated_at
+    )) AS records
+FROM 
+    user_inActionWorkouts uiw
     WHERE 
-        uiw.created_at BETWEEN $1 AND $2
-        AND uiw.user_id = $3
-    GROUP BY 
-        DATE_TRUNC('week', date_trunc('day', uiw.created_at))
-    ORDER BY 
-        week_start_date;
-    `;
+    TO_TIMESTAMP(uiw.created_at, 'YYYY-MM-DD HH24:MI:SS') BETWEEN $1 AND $2
+    AND uiw.user_id = $3
+GROUP BY 
+    DATE_TRUNC('week', date_trunc('day', TO_TIMESTAMP(uiw.created_at, 'YYYY-MM-DD HH24:MI:SS')))
+ORDER BY 
+    week_start_date;`
 
 
 
@@ -1274,64 +1320,113 @@ exports.getWeeklyReportOfUser = async (req, res) => {
         const result = await pool.query(query, [startDate, current_date, user_id])
 
 
-
-let totalTime = 0
-let totalCaloriesBurnt = 0
-let records;
-let formatted_time;
+let records=[];
 if(result.rows){
-    records = result.rows
+    records = [...result.rows]
+    records = JSON.parse(JSON.stringify(records))
 }
-let count =0
+
 
 for (let i = 0; i < records.length; i++) {
-    const record = records[i].records;
+    let record = records[i].records;
+    console.log("g;io;j bioeytig9er9tevoeishgfjh",record)
 
-    if(record){
-        for (let j = 0; j < record.length; j++) {
-            const element = record[j];
-            console.log(element.workout_plan)
-        if (element.workout_plan) {
-    
-            const { time, calories_burnt } = element.workout_plan;
-            console.log(time);
-            console.log(calories_burnt)
-           
-            if (time) {
-                console.log(time)
-              const [hours, minutes, seconds] = time.split(':').map(Number)
-              totalTime += hours * 3600 + minutes * 60 + seconds;
-               formatted_time = new Date(totalTime * 1000).toISOString().slice(11, 19);
-              console.log(formatted_time); // 👉️ "00:10:00" (hh:mm:ss)
-             
-            }
-            if (calories_burnt) {
-              totalCaloriesBurnt += calories_burnt
-            }
-            count++;
-          }
-            
-        }   
+    for (let j = 0; j < record.length; j++) {
+        let element = record[j];
+        console.log("haksf; haiosfq" , element)
+        console.log("calories burnt" , element.workout_plan.calories_burnt);
+        console.log("calories burnt" , element.workout_plan.time);
+        console.log("calories burnt" , element.time);
+
+        
+        let calories_burned_by_user = await calculateCaloriesBurned(element.workout_plan.calories_burnt , element.workout_plan.time , element.time);
+        console.log("shahfioa" ,calories_burned_by_user)
+        element.calories_burned_by_user = calories_burned_by_user;
     }
+}
 
-    
+for (let i = 0; i < records.length; i++) {
+    let count = records.length;
+    let record = records[i].records;
+    let total_week_calories_burned_by_user =0;
+    for (let j = 0; j < record.length; j++) {
+        let element = record[j];
+     
+        total_week_calories_burned_by_user = total_week_calories_burned_by_user+ element.calories_burned_by_user
+
+    }
+    console.log("total calories" , total_week_calories_burned_by_user)
+    records[i]= {total_week_calories_burned_by_user : total_week_calories_burned_by_user , ...records[i]}
 
 }
-console.log(count)
+for (let i = 0; i < records.length; i++) {
+    let count = 0;
+    let record = records[i].records;
+    count = record.length;
+  
+    records[i]= {total_records_in_this_week : count , ...records[i]}
+
+}
+
+for (let i = 0; i < records.length; i++) {
+    let record = records[i].records;
+    let total_week_calories_to_burn =0;
+    for (let j = 0; j < record.length; j++) {
+        let element = record[j];
+     
+        total_week_calories_to_burn = total_week_calories_to_burn+ element.workout_plan.calories_burnt;
+
+    }
+    console.log("total calories" , total_week_calories_to_burn)
+
+    records[i]= {total_week_calories_to_burn : total_week_calories_to_burn , ...records[i]}
+}
 
 
+for (let i = 0; i < records.length; i++) {
+    let record = records[i].records;
+    let total_user_done_workout_time =0;
+    for (let j = 0; j < record.length; j++) {
+        let element = record[j];
 
-console.log(`Total time: ${formatted_time}`)
-console.log(`Total calories burnt: ${totalCaloriesBurnt}`)
+        let time = element.time
+        if (time) {
+            console.log(time)
+          const [hours, minutes, seconds] = time.split(':').map(Number)
+          total_user_done_workout_time += hours * 3600 + minutes * 60 + seconds;
+        }
+    }
 
+    let formatted_time = new Date(total_user_done_workout_time * 1000).toISOString().slice(11, 19);
+
+    records[i]= {total_user_done_workout_time : formatted_time , ...records[i]}
+}
+
+
+for (let i = 0; i < records.length; i++) {
+    let record = records[i].records;
+    let total_week_time =0;
+    for (let j = 0; j < record.length; j++) {
+        let element = record[j];
+
+        let time = element.workout_plan.time;
+        if (time) {
+            console.log(time)
+          const [hours, minutes, seconds] = time.split(':').map(Number)
+          total_week_time += hours * 3600 + minutes * 60 + seconds;
+        }
+    }
+
+    let formatted_time = new Date(total_week_time * 1000).toISOString().slice(11, 19);
+
+    records[i]= {total_week_time : formatted_time , ...records[i]}
+}
 
         if (result.rows) {
             res.json({
                 message: "Fetched",
                 status: true,
-                totalCaloriesBurnt : totalCaloriesBurnt,
-                totalTime : formatted_time,
-                result: result.rows,
+                result: records,
             })
         }
         else {
@@ -1527,21 +1622,32 @@ exports.getAllTrashRecords = async (req, res) => {
 }
 
 
-function getStartDateOfWeek(date, day_no) {
-    // Get the day of the week for the specified date (0 = Sunday, 1 = Monday, etc.)
-    const dayOfWeek = date.getDay();
-
-    // Calculate the difference between the specified day number and the current day of the week
-    const diff = day_no - dayOfWeek;
-
-    // If the difference is negative, add 7 to get the number of days until the next specified day of the week
-    const daysUntilNextDayNo = diff < 0 ? diff + 7 : diff;
-
-    // Add the number of days until the next specified day of the week to the current date to get the start date of the week
-    const startDate = new Date(date.getTime() + daysUntilNextDayNo * 24 * 60 * 60 * 1000);
-
+function getStartDateOfWeek(date, day_no , startDayOfWeek=1) {
+    const startDate = new Date(date);
+    const currentDayOfWeek = (startDate.getDay() + 6) % 7 + 1;
+  
+    // Calculate the number of days to subtract to reach the desired start day of the week
+    const daysToSubtract = (currentDayOfWeek - startDayOfWeek + 7) % 7;
+  
+    // Adjust the start date by subtracting the days and adding the daysToAdd
+    startDate.setDate(startDate.getDate() - daysToSubtract + day_no);
+  
     return startDate;
 }
+
+async function calculateCaloriesBurned(caloriesBurned, time, workoutTime) {
+    const [hours, minutes, seconds] = time.split(":").map(Number);
+    const totalSeconds = (hours * 3600) + (minutes * 60) + seconds;
+  
+    const [workoutHours, workoutMinutes, workoutSeconds] = workoutTime.split(":").map(Number);
+    const totalWorkoutSeconds = (workoutHours * 3600) + (workoutMinutes * 60) + workoutSeconds;
+  
+    const caloriesPerSecond = caloriesBurned / totalSeconds;
+    const caloriesBurnedInWorkout = Math.round(caloriesPerSecond * totalWorkoutSeconds);
+  
+    return caloriesBurnedInWorkout;
+  }
+  
 
 // take user first workout date , like first ever time he started . 
 // get user first day of week . so like if user has set 3 means wednesday , Then get all weeks of the user . 
@@ -1552,3 +1658,7 @@ function getStartDateOfWeek(date, day_no) {
 
 //in my plans , add added_by , added_by_id ,
 // get all workoutplans added by user
+
+
+
+    

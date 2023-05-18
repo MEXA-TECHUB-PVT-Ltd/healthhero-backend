@@ -9,17 +9,26 @@ exports.addExersise = async (req, res) => {
         const description = req.body.description ;
         const animation = req.body.animation ;
         const video_link = req.body.video_link;
+        const created_at = req.body.created_at;
 
-
+        if(!created_at){
+            return(
+                res.json({
+                    message: "must provide created_at",
+                    status : false
+                })
+            )
+        }
 
    
-        const query = 'INSERT INTO exersises ( title , description ,animation , video_link ) VALUES ($1 , $2 , $3 , $4 ) RETURNING*'
+        const query = 'INSERT INTO exersises ( title , description ,animation , video_link , created_at ) VALUES ($1 , $2 , $3 , $4 ,$5) RETURNING*'
         const result = await pool.query(query , 
             [
                 title ? title : null,
                 description ? description : null,
                 animation ? animation : null,
                 video_link ? video_link : null,
+                created_at ? created_at : null
     
             ]);
 
@@ -255,10 +264,21 @@ exports.getAnWorkoutPlanExersise= async (req, res) => {
         const query = 'SELECT * FROM exersises WHERE exersise_id = $1'
         const result = await pool.query(query , [exersise_id]);
 
+        const foundLikesQuery = 'SELECT * FROM liked_exersises_of_user WHERE exersise_id = $1';
+        const likes = await pool.query(foundLikesQuery , [exersise_id]);
+
+        console.log(likes.rows)
+        let totalLikesCount=0;
+
+        if(likes.rowCount>0){
+            totalLikesCount = likes.rows.length;
+        }
+
         if (result.rowCount>0) {
             res.json({
                 message: "Fetched",
                 status: true,
+                likes_count : totalLikesCount,
                 result: result.rows[0]
             })
         }
@@ -543,7 +563,7 @@ exports.deleteTemporarily = async (req, res) => {
         }
 
         const query = 'UPDATE exersises SET trash=$2 WHERE exersise_id = $1 RETURNING *';
-        const result = await pool.query(query , [workout_plan_id , true]);
+        const result = await pool.query(query , [exersise_id , true]);
 
         if(result.rowCount>0){
             res.status(200).json({

@@ -10,16 +10,27 @@ exports.create_my_plan = async (req, res) => {
         const plan_name = req.body.plan_name;
         const description = req.body.description;
         const exersise_ids = req.body.exersise_ids;
+        const created_at = req.body.created_at;
+
+        if(!created_at || !user_id){
+            return(
+                res.json({
+                    message: "created_at and user_id must be provided",
+                    status : false
+                })
+            )
+        }
 
 
 
-        const query = 'INSERT INTO user_plans (user_id ,plan_name,description, exersise_ids) VALUES ($1 , $2 , $3 , $4) RETURNING*'
+        const query = 'INSERT INTO user_plans (user_id ,plan_name,description, exersise_ids , created_at) VALUES ($1 , $2 , $3 , $4 , $5) RETURNING*'
         const result = await pool.query(query , 
             [
                 user_id ? user_id : null,
                 plan_name ? plan_name : null,
                 description ?description : null,
-                exersise_ids ? exersise_ids : null
+                exersise_ids ? exersise_ids : null,
+                created_at ? created_at : null
               
             ]);
 
@@ -287,7 +298,7 @@ exports.get_plan= async (req, res) => {
             )
         }
 
-        const query = 'SELECT * FROM user_plans WHERE user_id = $1 AND workout_plan_id = $2';
+        const query = 'SELECT * ,array_length(user_plans.exersise_ids, 1) AS exercises_count FROM user_plans WHERE user_id = $1 AND workout_plan_id = $2';
         const result = await pool.query(query , [user_id , plan_id]);
 
         if(result.rowCount>0){
@@ -335,7 +346,7 @@ exports.getAllUserPlans = async (req, res) => {
         let result;
 
         if (!page || !limit) {
-            const query = 'SELECT * FROM user_plans WHERE user_id = $1'
+            const query = `SELECT *, array_length(user_plans.exersise_ids, 1) AS exercises_count FROM user_plans WHERE user_id = $1`
             result = await pool.query(query , [user_id]);
            
         }
@@ -344,7 +355,7 @@ exports.getAllUserPlans = async (req, res) => {
             limit = parseInt(limit);
             let offset= (parseInt(page)-1)* limit
 
-        const query = 'SELECT * FROM user_plans WHERE user_id = $3 LIMIT $1 OFFSET $2'
+        const query = `SELECT *, array_length(user_plans.exersise_ids, 1) AS exercises_count FROM user_plans WHERE user_id = $3 LIMIT $1 OFFSET $2`
         result = await pool.query(query , [limit , offset , user_id]);
 
       
