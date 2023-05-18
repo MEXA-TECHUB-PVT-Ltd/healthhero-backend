@@ -191,6 +191,7 @@ exports.addExersise_in_myPlan= async (req, res) => {
         client.release();
       }
 }
+
 exports.removeExersise_in_myPlan= async (req, res) => {
     const client = await pool.connect();
     try {
@@ -298,7 +299,28 @@ exports.get_plan= async (req, res) => {
             )
         }
 
-        const query = 'SELECT * ,array_length(user_plans.exersise_ids, 1) AS exercises_count FROM user_plans WHERE user_id = $1 AND workout_plan_id = $2';
+        const query = `
+  SELECT
+    up.*,
+    (
+      SELECT json_agg(
+        json_build_object(
+          'exercise_id', e.exersise_id,
+          'title', e.title,
+          'description', e.description,
+          'animation', e.animation,
+          'video_link', e.video_link,
+          'created_at', e.created_at
+        )
+      )
+      FROM exersises e
+      WHERE e.exersise_id = ANY(up.exersise_ids)
+    ) AS exercise_details
+    , array_length(up.exersise_ids, 1) AS exercises_count
+  FROM user_plans up
+  WHERE up.user_id = $1 AND up.workout_plan_id = $2;
+`;
+
         const result = await pool.query(query , [user_id , plan_id]);
 
         if(result.rowCount>0){
@@ -327,6 +349,7 @@ exports.get_plan= async (req, res) => {
         client.release();
       }
 }
+
 exports.getAllUserPlans = async (req, res) => {
     const client = await pool.connect();
     try {
@@ -346,7 +369,25 @@ exports.getAllUserPlans = async (req, res) => {
         let result;
 
         if (!page || !limit) {
-            const query = `SELECT *, array_length(user_plans.exersise_ids, 1) AS exercises_count FROM user_plans WHERE user_id = $1`
+            const query = `SELECT
+            up.*,
+            (
+              SELECT json_agg(
+                json_build_object(
+                  'exercise_id', e.exersise_id,
+                  'title', e.title,
+                  'description', e.description,
+                  'animation', e.animation,
+                  'video_link', e.video_link,
+                  'created_at', e.created_at
+                )
+              )
+              FROM exersises e
+              WHERE e.exersise_id = ANY(up.exersise_ids)
+            ) AS exercise_details
+            , array_length(up.exersise_ids, 1) AS exercises_count
+          FROM user_plans up
+          WHERE up.user_id = $1`
             result = await pool.query(query , [user_id]);
            
         }
@@ -355,7 +396,25 @@ exports.getAllUserPlans = async (req, res) => {
             limit = parseInt(limit);
             let offset= (parseInt(page)-1)* limit
 
-        const query = `SELECT *, array_length(user_plans.exersise_ids, 1) AS exercises_count FROM user_plans WHERE user_id = $3 LIMIT $1 OFFSET $2`
+        const query = `SELECT
+        up.*,
+        (
+          SELECT json_agg(
+            json_build_object(
+              'exercise_id', e.exersise_id,
+              'title', e.title,
+              'description', e.description,
+              'animation', e.animation,
+              'video_link', e.video_link,
+              'created_at', e.created_at
+            )
+          )
+          FROM exersises e
+          WHERE e.exersise_id = ANY(up.exersise_ids)
+        ) AS exercise_details
+        , array_length(up.exersise_ids, 1) AS exercises_count
+      FROM user_plans up
+      WHERE up.user_id = $3 LIMIT $1 OFFSET $2`
         result = await pool.query(query , [limit , offset , user_id]);
 
       

@@ -46,6 +46,13 @@ exports.registerUser = async (req, res, next) => {
         console.log(result.rows[0])
 
         if(result.rows[0]){
+            const createSubscriptionQuery =   `INSERT INTO user_subscription (user_id , subscription_status , add_removal_status) VALUES ($1 , $2 , $3) RETURNING *`;
+            const subResult = await pool.query(createSubscriptionQuery , [result.rows[0].user_id , false ,false] )
+            if(subResult.rows[0]){
+                console.log("user subscription created automatically while signing up")
+            }
+        }
+        if(result.rows[0]){
             res.json({
                 message: "User Has been registered successfully",
                 status : true,
@@ -654,6 +661,286 @@ exports.getAllTrashRecords = async (req, res) => {
       }
 }
 
+
+exports.updateSubscribeStatus= async (req, res) => {
+    const client = await pool.connect();
+    try {
+
+        const user_id = req.body.user_id;
+        const subscription_status = req.body.subscription_status;
+        const created_at = req.body.created_at;
+
+        if(!subscription_status  || !user_id){
+            return(
+                res.json({
+                    message: "subscription status and user_id must be provided",
+                    status : false
+                })
+            )
+        }
+
+           
+        let query = 'UPDATE user_subscription SET ';
+        let index = 2;
+        let values =[user_id];
+
+        
+        if(subscription_status){
+            query+= `subscription_status = $${index} , `;
+            values.push(subscription_status)
+            index ++
+        }
+
+        if(created_at){
+            query+= `created_at = $${index} , `;
+            values.push(created_at)
+            index ++
+        }
+
+        query += 'WHERE user_id = $1 RETURNING*'
+        query = query.replace(/,\s+WHERE/g, " WHERE");
+        console.log(query);
+      
+        const result = await pool.query(query , values)
+        if(result.rowCount>0){
+            res.status(200).json({
+                message: "Updated subscription status",
+                status: true,
+                result: result.rows
+            })
+        }
+        else{
+            res.status(404).json({
+                message: "Unable to update, make sure that while use is signed up",
+                status: false,
+            })
+        }
+
+    }
+    catch (err) {
+        res.json({
+            message: "Error",
+            status: false,
+            error: err.message
+        })
+    }
+    finally {
+        client.release();
+      }
+}
+
+exports.getUserSubscribedDetails = async (req, res) => {
+    const client = await pool.connect();
+    try {
+        const user_id = req.query.user_id;
+
+        if(!user_id){
+            return(
+                res.json({
+                    message: "user_id must be provided",
+                    status : false
+                })
+            )
+        }
+        const query = `SELECT
+        json_agg(json_build_object(
+          'user_id', u.user_id,
+          'user_name', u.user_name,
+          'email', u.email,
+          'password', u.password,
+          'focused_areas', u.focused_areas,
+          'gender', u.gender,
+          'device_id', u.device_id,
+          'block', u.block,
+          'height', u.height,
+          'weight', u.weight,
+          'height_unit', u.height_unit,
+          'weight_unit', u.weight_unit,
+          'created_at', u.created_at,
+          'trash', u.trash,
+          'updated_at', u.updated_at,
+          'user_subscription', (
+            SELECT json_agg(json_build_object(
+              'user_subscription_id', us.user_subscription_id,
+              'subscription_status', us.subscription_status,
+              'add_removal_status', us.add_removal_status,
+              'created_at', us.created_at
+            ))
+            FROM user_subscription us
+            WHERE us.user_id = u.user_id
+          )
+        )) AS records
+      FROM users u
+      WHERE u.user_id = $1
+      GROUP BY u.user_id;
+      ;
+      ;
+      `;
+        const result = await pool.query(query , [user_id]);
+
+        if(result.rowCount>0){
+            res.status(200).json({
+                message: "Fethced",
+                status: true,
+                result: result.rows[0].records[0]
+            })
+        }
+        else{
+            res.status(404).json({
+                message: "Could not find",
+                status: false,
+            })
+        }
+
+    }
+    catch (err) {
+        res.json({
+            message: "Error",
+            status: false,
+            error: err.message
+        })
+    }
+    finally {
+        client.release();
+      }
+}
+
+exports.getSubscribedUsers = async (req, res) => {
+    const client = await pool.connect();
+    try {
+        const query = `SELECT
+        json_agg(
+            json_build_object(
+            'user_subscription_id', us.user_subscription_id,
+              'subscription_status', us.subscription_status,
+              'add_removal_status', us.add_removal_status,
+              'created_at', us.created_at,
+             'user_details', (
+              SELECT json_agg(
+                json_build_object
+                (
+                    'user_id', u.user_id,
+                    'user_name', u.user_name,
+                     'email', u.email,
+                    'password', u.password,
+                    'focused_areas', u.focused_areas,
+                    'gender', u.gender,
+                    'device_id', u.device_id,
+                    'block', u.block,
+                    'height', u.height,
+                    'weight', u.weight,
+                    'height_unit', u.height_unit,
+                    'weight_unit', u.weight_unit,
+                    'created_at', u.created_at,
+                    'trash', u.trash,
+                    'updated_at', u.updated_at
+                )
+            )
+            FROM users u
+            WHERE u.user_id = us.user_id
+          )
+        )
+        ) 
+        FROM user_subscription us
+        WHERE us.subscription_status = $1
+      ;
+      `;
+        const result = await pool.query(query , [true]);
+
+        if(result.rowCount>0){
+            res.status(200).json({
+                message: "All subscribed users ",
+                status: true,
+                result: result.rows[0].json_agg
+            })
+        }
+        else{
+            res.status(404).json({
+                message: "Could not find",
+                status: false,
+            })
+        }
+
+    }
+    catch (err) {
+        res.json({
+            message: "Error",
+            status: false,
+            error: err.message
+        })
+    }
+    finally {
+        client.release();
+      }
+}
+
+exports.updateAdRemovalStatus= async (req, res) => {
+    const client = await pool.connect();
+    try {
+
+        const user_id = req.body.user_id;
+        const add_removal_status = req.body.add_removal_status;
+        const created_at = req.body.created_at;
+
+        if(!add_removal_status  || !user_id){
+            return(
+                res.json({
+                    message: " add_removal_status and user_id must be provided",
+                    status : false
+                })
+            )
+        }
+
+           
+        let query = 'UPDATE user_subscription SET ';
+        let index = 2;
+        let values =[user_id];
+
+        
+        if(add_removal_status){
+            query+= `add_removal_status = $${index} , `;
+            values.push(add_removal_status)
+            index ++
+        }
+
+        if(created_at){
+            query+= `created_at = $${index} , `;
+            values.push(created_at)
+            index ++
+        }
+
+        query += 'WHERE user_id = $1 RETURNING*'
+        query = query.replace(/,\s+WHERE/g, " WHERE");
+        console.log(query);
+      
+        const result = await pool.query(query , values)
+
+        if(result.rowCount>0){
+            res.status(200).json({
+                message: "Updated add removal status",
+                status: true,
+                result: result.rows
+            })
+        }
+        else{
+            res.status(404).json({
+                message: "Could not updated. Make sure that user is signed up previously",
+                status: false,
+            })
+        }
+
+    }
+    catch (err) {
+        res.json({
+            message: "Error",
+            status: false,
+            error: err.message
+        })
+    }
+    finally {
+        client.release();
+      }
+}
 
 
 const registerSchema = Joi.object({

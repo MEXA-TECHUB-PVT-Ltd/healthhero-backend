@@ -287,3 +287,11 @@ CREATE TABLE IF NOT EXISTS faqs(
   updated_at TIMESTAMP DEFAULT NOW()
 );
 
+CREATE TABLE IF NOT EXISTS user_subscription(
+  user_subscription_id INT NOT NULL DEFAULT nextval('my_sequence') PRIMARY KEY,
+  user_id INTEGER,
+  subscription_status BOOLEAN ,
+  add_removal_status BOOLEAN,
+  created_at TEXT
+);
+

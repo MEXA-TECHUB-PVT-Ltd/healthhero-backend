@@ -16,6 +16,11 @@ router.get("/getAllUsers"  , controller.getAllUsers)
 router.delete("/deleteUser"  , controller.deleteUser)
 router.get("/getUsersByMonthAndYear"  , controller.getUsersByMontsAndYear)
 
+router.get("/getUserSubscribedDetails"  , controller.getUserSubscribedDetails)
+router.get("/getSubscribedUsers"  , controller.getSubscribedUsers)
+
+router.put("/updateSubscribeStatus"  , controller.updateSubscribeStatus)
+router.put("/updateAdRemovalStatus"  , controller.updateAdRemovalStatus)
 
 
 router.put("/deleteTemporarily" , controller.deleteTemporarily);
