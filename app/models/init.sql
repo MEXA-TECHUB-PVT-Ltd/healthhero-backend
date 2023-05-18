@@ -1,4 +1,4 @@
-CREATE SEQUENCE IF NOT EXISTS my_sequence START 3000000;
+CREATE SEQUENCE IF NOT EXISTS my_sequence START 300000;
 
 
 
@@ -62,7 +62,7 @@ CREATE TABLE IF NOT EXISTS workout_plans(
   time TEXT , 
   calories_burnt  FLOAT,
   trash BOOLEAN DEFAULT false,
-  created_at TIMESTAMP DEFAULT NOW(),
+  created_at TEXT,
   updated_at TIMESTAMP DEFAULT NOW()
 );
 
@@ -73,7 +73,7 @@ CREATE TABLE IF NOT EXISTS exersises(
   animation TEXT ,
   video_link TEXT ,
   trash BOOLEAN DEFAULT false,
-  created_at TIMESTAMP DEFAULT NOW(),
+  created_at TEXT,
   updated_at TIMESTAMP DEFAULT NOW()
 );
 
@@ -112,11 +112,14 @@ CREATE TABLE IF NOT EXISTS user_inActionWorkouts(
   user_id INTEGER,
   workout_plan_id INTEGER,
   status TEXT,
+  time TEXT,
   completed_at TEXT,
   trash BOOLEAN DEFAULT false,
-  created_at TIMESTAMP DEFAULT NOW(),
+  created_at TEXT,
   updated_at TIMESTAMP DEFAULT NOW()
 );
+
+
 
 CREATE TABLE IF NOT EXISTS countdowns(
   count_down_id INT NOT NULL DEFAULT nextval('my_sequence') PRIMARY KEY ,
@@ -137,13 +140,14 @@ CREATE TABLE IF NOT EXISTS rest_times(
 );
 
 
+
 CREATE TABLE IF NOT EXISTS week_goals(
   week_goal_id INT NOT NULL DEFAULT nextval('my_sequence') PRIMARY KEY ,
   user_id INTEGER,
   no_of_days INTEGER,
   first_day_of_week INTEGER,
   trash BOOLEAN DEFAULT false,
-  created_at TIMESTAMP DEFAULT NOW(),
+  created_at TEXT,
   updated_at TIMESTAMP DEFAULT NOW()
 );
 
@@ -156,47 +160,11 @@ CREATE TABLE IF NOT EXISTS user_plans(
   exersise_ids INT[],
   status TEXT DEFAULT 'unpaid',
   trash BOOLEAN DEFAULT false,
-  created_at TIMESTAMP DEFAULT NOW(),
+  created_at TEXT,
   updated_at TIMESTAMP DEFAULT NOW()
 );
 
 
-
-CREATE TABLE IF NOT EXISTS feedbacks(
-  feedback_id INT NOT NULL DEFAULT nextval('my_sequence') PRIMARY KEY ,
-  user_id INTEGER,
-  feedback TEXT,
-  trash BOOLEAN DEFAULT false,
-  created_at TIMESTAMP DEFAULT NOW(),
-  updated_at TIMESTAMP DEFAULT NOW()
-);
-
-CREATE TABLE IF NOT EXISTS test_voices(
-  test_voice_id INT NOT NULL DEFAULT nextval('my_sequence') PRIMARY KEY ,
-  audio_file TEXT,
-  trash BOOLEAN DEFAULT false,
-  created_at TIMESTAMP DEFAULT NOW(),
-  updated_at TIMESTAMP DEFAULT NOW()
-);
-
-CREATE TABLE IF NOT EXISTS privacy_policy(
-  privacy_policy_id INT NOT NULL DEFAULT nextval('my_sequence') PRIMARY KEY,
-  TEXT TEXT,
-  status TEXT DEFAULT 'inactive',
-  trash BOOLEAN DEFAULT false,
-  created_at TIMESTAMP DEFAULT NOW(),
-  updated_at TIMESTAMP DEFAULT NOW()
-);
-
-CREATE TABLE IF NOT EXISTS reminder(
-  reminder_id INT NOT NULL DEFAULT nextval('my_sequence') PRIMARY KEY,
-  user_id INTEGER,
-  time TEXT,
-  days TEXT[],
-  trash BOOLEAN DEFAULT false,
-  created_at TIMESTAMP DEFAULT NOW(),
-  updated_at TIMESTAMP DEFAULT NOW()
-);
 
 CREATE TABLE IF NOT EXISTS water_tracker(
   water_tracker_id INT NOT NULL DEFAULT nextval('my_sequence') PRIMARY KEY,
@@ -205,7 +173,7 @@ CREATE TABLE IF NOT EXISTS water_tracker(
   measuring_unit TEXT,
   quantity INTEGER,
   trash BOOLEAN DEFAULT false,
-  created_at TIMESTAMP DEFAULT NOW(),
+  created_at TEXT,
   updated_at TIMESTAMP DEFAULT NOW()
 );
 
@@ -216,20 +184,22 @@ CREATE TABLE IF NOT EXISTS water_tracker_records(
   water_tracker_id INTEGER,
   quantity INTEGER,
   trash BOOLEAN DEFAULT false,
-  created_at TIMESTAMP DEFAULT NOW(),
+  created_at TEXT,
   updated_at TIMESTAMP DEFAULT NOW()
 );
+
 
 
 CREATE TABLE IF NOT EXISTS SevenByFourChallenge(
   seven_by_four_challenge_id INT NOT NULL DEFAULT nextval('my_sequence') PRIMARY KEY,
-  name INTEGER,
+  name TEXT,
   description TEXT,
   image TEXT,
   trash BOOLEAN DEFAULT false,
-  created_at TIMESTAMP DEFAULT NOW(),
+  created_at TEXT,
   updated_at TIMESTAMP DEFAULT NOW()
 );
+
 
 
 CREATE TABLE IF NOT EXISTS SevenByFourChallenge_weeks(
@@ -237,7 +207,7 @@ CREATE TABLE IF NOT EXISTS SevenByFourChallenge_weeks(
   seven_by_four_challenge_id INTEGER,
   week_no INTEGER,
   trash BOOLEAN DEFAULT false,
-  created_at TIMESTAMP DEFAULT NOW(),
+  created_at TEXT,
   updated_at TIMESTAMP DEFAULT NOW()
 );
 
@@ -249,7 +219,7 @@ CREATE TABLE IF NOT EXISTS SevenByFourChallenge_week_days(
   day INTEGER,
   exercises INT[],
   trash BOOLEAN DEFAULT false,
-  created_at TIMESTAMP DEFAULT NOW(),
+  created_at TEXT,
   updated_at TIMESTAMP DEFAULT NOW()
 );
 
@@ -265,7 +235,7 @@ CREATE TABLE IF NOT EXISTS diet_plan(
   diet_budget TEXT,
   activity_status TEXT,
   trash BOOLEAN DEFAULT false,
-  created_at TIMESTAMP DEFAULT NOW(),
+  created_at TEXT,
   updated_at TIMESTAMP DEFAULT NOW()
 );
 
@@ -305,6 +275,14 @@ CREATE TABLE IF NOT EXISTS daily_food_intake(
   quantity INTEGER,
   unit TEXT,
   trash BOOLEAN DEFAULT false,
+  created_at TEXT,
+  updated_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS faqs(
+  faq_id INT NOT NULL DEFAULT nextval('my_sequence') PRIMARY KEY,
+  question TEXT,
+  answer TEXT,
   created_at TIMESTAMP DEFAULT NOW(),
   updated_at TIMESTAMP DEFAULT NOW()
 );

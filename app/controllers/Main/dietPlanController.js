@@ -15,6 +15,17 @@ exports.addDietPlan = async (req, res) => {
         const activity_status = req.body.activity_status;
         const purpose = req.body.purpose;
 
+        const created_at = req.body.created_at;
+
+        if(!created_at){
+            return(
+                res.json({
+                    message: "created_at must be provided",
+                    status : false
+                })
+            )
+        }
+
 
         if (!height || !weight || !age || !gender || !targetted_weight || !activity_status || !purpose) {
             return (
@@ -47,8 +58,8 @@ exports.addDietPlan = async (req, res) => {
         }
 
         const query = `INSERT INTO diet_plan 
-                (user_id , height  , weight , age , gender , targetted_weight , diet_budget , activity_status , purpose)
-                VALUES ($1 , $2, $3 , $4 , $5, $6, $7 , $8 , $9) RETURNING *            
+                (user_id , height  , weight , age , gender , targetted_weight , diet_budget , activity_status , purpose , created_at)
+                VALUES ($1 , $2, $3 , $4 , $5, $6, $7 , $8 , $9 , $10) RETURNING *            
         `
         const result = await pool.query(query,
             [
@@ -60,7 +71,8 @@ exports.addDietPlan = async (req, res) => {
                 targetted_weight ? targetted_weight : null,
                 diet_budget ? diet_budget : null,
                 activity_status ? activity_status : null,
-                purpose ? purpose : null
+                purpose ? purpose : null,
+                created_at ? created_at : null
             ]);
 
         let macros;
@@ -427,6 +439,17 @@ exports.addFoodIntake = async (req, res) => {
         const food_id = req.body.food_id;
         const quantity = req.body.quantity;
         const unit = req.body.unit;
+        const created_at = req.body.created_at;
+
+        if(!created_at){
+            return(
+                res.json({
+                    message: "created_at must be provided",
+                    status : false
+                })
+            )
+        }
+
 
         if (!user_id || !food_id || !diet_plan_id) {
             return (
@@ -468,8 +491,8 @@ exports.addFoodIntake = async (req, res) => {
 
 
         const query = `INSERT INTO daily_food_intake 
-                (user_id , diet_plan_id  , meal_time , food_id , quantity , unit)
-                VALUES ($1 , $2, $3 , $4 , $5, $6) RETURNING *            
+                (user_id , diet_plan_id  , meal_time , food_id , quantity , unit , created_at)
+                VALUES ($1 , $2, $3 , $4 , $5, $6 , $7) RETURNING *            
         `
         const result = await pool.query(query,
             [
@@ -479,17 +502,19 @@ exports.addFoodIntake = async (req, res) => {
                 food_id ? food_id : null,
                 quantity ? quantity : null,
                 unit ? unit : null,
+                created_at ? created_at : null
             ]);
         console.log(result.rows);
 
 
         const todaysIntakesQuery = `SELECT 
-            daily_food_intake.*, 
-            ROW_TO_JSON(food.*) AS food_details 
-          FROM 
-            daily_food_intake 
-            JOIN food ON food.food_id = daily_food_intake.food_id        
-           WHERE user_id = $1 AND  DATE(daily_food_intake.created_at) = CURRENT_DATE;`
+        daily_food_intake.*, 
+        ROW_TO_JSON(food.*) AS food_details 
+      FROM 
+        daily_food_intake 
+        JOIN food ON food.food_id = daily_food_intake.food_id        
+       WHERE user_id = $1 AND  TO_DATE(daily_food_intake.created_at, 'YYYY-MM-DD') = CURRENT_DATE;`;
+
 
 
         const todayIntake = await pool.query(todaysIntakesQuery, [user_id]);

@@ -59,6 +59,8 @@ app.get("/" , (req,res)=>{
   app.use("/water_tracking" , require("./app/routes/Main/water_trackerRoute"))
   app.use("/diet_plan" , require("./app/routes/Main/dietPlanRoute"))
   app.use("/food" , require("./app/routes/Main/FoodRoute"))
+  app.use("/faq" , require("./app/routes/Main/faqRoute"))
+
 
 
 

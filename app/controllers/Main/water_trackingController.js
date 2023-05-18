@@ -10,14 +10,16 @@ exports.add_water_tracker = async (req, res) => {
         const measure = req.body.measure;
         const measuring_unit = req.body.measuring_unit ;
         const quantity = req.body.quantity;
+        const created_at  = req.body.created_at;
 
 
 
 
-        if(!user_id){
+
+        if(!user_id || !created_at){
             return(
                 res.json({
-                    message: "Must provide user_id",
+                    message: "Must provide user_id and created_at",
                     status : false
                 })
             )
@@ -51,13 +53,14 @@ exports.add_water_tracker = async (req, res) => {
         }
 
 
-        const query = 'INSERT INTO water_tracker ( user_id , measure , measuring_unit ,quantity ) VALUES ($1 , $2 , $3 , $4) RETURNING*'
+        const query = 'INSERT INTO water_tracker ( user_id , measure , measuring_unit ,quantity , created_at) VALUES ($1 , $2 , $3 , $4 , $5) RETURNING*'
         const result = await pool.query(query , 
             [
                 user_id ? user_id : null,
                 measure ? measure : null,
                 measuring_unit ? measuring_unit : null,
                 quantity ? quantity : null,
+                created_at ? created_at : null
   
               
             ]);
@@ -239,16 +242,17 @@ exports.add_record_water_tracker = async (req, res) => {
         const user_id = req.body.user_id;
         const water_tracker_id = req.body.water_tracker_id ;
         const quantity = req.body.quantity;
+        const created_at = req.body.created_at;
         let result;
         let query;
 
 
 
 
-        if(!user_id || !water_tracker_id){
+        if(!user_id || !water_tracker_id || !created_at){
             return(
                 res.json({
-                    message: "Must provide user_id and water_tracker_id",
+                    message: "Must provide user_id and water_tracker_id and created_at",
                     status : false
                 })
             )
@@ -263,12 +267,13 @@ exports.add_record_water_tracker = async (req, res) => {
             result = await pool.query(query , [quantity , user_id , water_tracker_id])
         }
         else{
-            query = 'INSERT INTO water_tracker_records ( user_id , water_tracker_id ,quantity ) VALUES ($1 , $2 , $3) RETURNING*'
+            query = 'INSERT INTO water_tracker_records ( user_id , water_tracker_id ,quantity , created_at) VALUES ($1 , $2 , $3 , $4) RETURNING*'
             result = await pool.query(query , 
                [
                    user_id ? user_id : null,
                    water_tracker_id ? water_tracker_id : null,
                    quantity ? quantity : null,
+                   created_at ? created_at : null
                ]);
         }
 
@@ -430,7 +435,7 @@ exports.get_weekly_history= async (req, res) => {
             'water_tracker_record_id', wtr.water_tracker_record_id,
             'user_id', wtr.user_id,
             'quantity', wtr.quantity,
-            'created_at', wtr.created_at,
+            'created_at', TO_TIMESTAMP(wtr.created_at, 'YYYY-MM-DD HH24:MI:SS'),
             'updated_at', wtr.updated_at,
             'water_tracker', json_build_object(
                 'water_tracker_id', wt.water_tracker_id,
@@ -438,14 +443,15 @@ exports.get_weekly_history= async (req, res) => {
                 'measure', wt.measure,
                 'measuring_unit', wt.measuring_unit,
                 'quantity', wt.quantity,
-                'created_at', wt.created_at,
+                'created_at', TO_TIMESTAMP(wt.created_at, 'YYYY-MM-DD HH24:MI:SS'),
                 'updated_at', wt.updated_at
             )
         )
         FROM water_tracker_records wtr
         JOIN water_tracker wt ON wtr.water_tracker_id = wt.water_tracker_id
-        WHERE wtr.water_tracker_id = $1 AND  wtr.user_id = $2 AND DATE_TRUNC('week', wtr.created_at) = DATE_TRUNC('week', CURRENT_DATE);
-        `
+        WHERE wtr.water_tracker_id = $1 AND  wtr.user_id = $2 AND DATE_TRUNC('week', TO_TIMESTAMP(wtr.created_at, 'YYYY-MM-DD HH24:MI:SS')) = DATE_TRUNC('week', CURRENT_DATE);
+        `;
+
         const result = await pool.query(query , [water_tracker_id , user_id ]);
 
         if (result.rowCount>0) {

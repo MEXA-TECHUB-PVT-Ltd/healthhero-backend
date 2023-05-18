@@ -9,6 +9,8 @@ router.put("/setFirstDayOfWeek" , controller.setFirstDayOfWeek);
 router.put("/updateFirstDayOfWeek" , controller.updateFirstDayOfWeek);
 router.get("/getDaysOfTraining" , controller.getDaysOfTraining);
 router.get("/getFirstDayOfWeek" , controller.getFirstDayOfWeek);
+router.get("/getProgressOfThisWeek" , controller.getProgressOfThisWeek);
+
 
 
 
