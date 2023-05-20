@@ -216,6 +216,7 @@ CREATE TABLE IF NOT EXISTS SevenByFourChallenge_week_days(
   day_id INT NOT NULL DEFAULT nextval('my_sequence') PRIMARY KEY,
   week_id INTEGER,
   seven_by_four_challenge_id INTEGER,
+  plan_description TEXT,
   day INTEGER,
   exercises INT[],
   trash BOOLEAN DEFAULT false,
@@ -308,6 +309,24 @@ CREATE TABLE IF NOT EXISTS workout_reviews(
   user_id INTEGER,
   review TEXT,
   workout_plan_id INT,
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS user_weight(
+  workout_review_id INT NOT NULL DEFAULT nextval('my_sequence') PRIMARY KEY,
+  user_id INTEGER,
+  weight FLOAT,
+  weight_unit TEXT,
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS user_height(
+  height_review_id INT NOT NULL DEFAULT nextval('my_sequence') PRIMARY KEY,
+  user_id INTEGER,
+  height FLOAT,
+  height_unit TEXT,
   created_at TIMESTAMP DEFAULT NOW(),
   updated_at TIMESTAMP DEFAULT NOW()
 );
