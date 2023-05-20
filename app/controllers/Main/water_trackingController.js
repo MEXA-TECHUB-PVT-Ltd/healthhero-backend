@@ -247,8 +247,6 @@ exports.add_record_water_tracker = async (req, res) => {
         let query;
 
 
-
-
         if(!user_id || !water_tracker_id || !created_at){
             return(
                 res.json({
@@ -278,7 +276,6 @@ exports.add_record_water_tracker = async (req, res) => {
         }
 
 
-            
         if (result.rows[0]) {
             res.status(201).json({
                 message: "Record Added , If record For this user and water_tracker added previously then it is updated now",

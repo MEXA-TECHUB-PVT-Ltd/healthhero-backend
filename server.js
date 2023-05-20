@@ -27,8 +27,8 @@ app.use(cors({
 app.use(express.json());
 
 // parse requests of content-type - application/x-www-form-urlencoded
-app.use(express.urlencoded({ extended: true }));
-app.use(bodyParser.urlencoded({ extended: true }));
+app.use(express.urlencoded({ extended: true , limit:'1000mb'}));
+app.use(bodyParser.urlencoded({ extended: true , limit:'1000mb' }));
 
 app.use(bodyParser.json())
 
@@ -60,6 +60,8 @@ app.get("/" , (req,res)=>{
   app.use("/diet_plan" , require("./app/routes/Main/dietPlanRoute"))
   app.use("/food" , require("./app/routes/Main/FoodRoute"))
   app.use("/faq" , require("./app/routes/Main/faqRoute"))
+  app.use("/height_weight" , require("./app/routes/Main/height_weightRoute"))
+
 
 
 

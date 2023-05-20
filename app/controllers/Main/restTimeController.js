@@ -23,7 +23,7 @@ exports.addRestTime = async (req, res) => {
         const foundResult = await pool.query(foundQuery , [user_id ]);
 
         if(foundResult.rows[0]){
-            query = 'Update rest_times SET time=$1 trash=$3 WHERE user_id = $2 RETURNING*';
+            query = 'Update rest_times SET time=$1 ,  trash=$3 WHERE user_id = $2 RETURNING*';
             result = await pool.query(query  , [time , user_id , false])
         }
 
