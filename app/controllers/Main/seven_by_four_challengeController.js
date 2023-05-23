@@ -9,6 +9,8 @@ exports.addSeven_by_four = async (req, res) => {
         const name = req.body.name;
         const description = req.body.description;
         const image = req.body.image;
+        const calories_burns = req.body.calories_burns;
+        const time = req.body.time;
         const created_at = req.body.created_at;
 
         if(!created_at){
@@ -112,11 +114,13 @@ exports.addSeven_by_four = async (req, res) => {
         }
         }
 
-        const challenge_query = 'INSERT INTO SevenByFourChallenge (name , description , image , created_at) VALUES ($1 ,$2 ,$3 , $4) RETURNING *';
+        const challenge_query = 'INSERT INTO SevenByFourChallenge (name , description , image , calories_burns , time , created_at) VALUES ($1 ,$2 ,$3 , $4 , $5 , $6) RETURNING *';
         const challenge_result = await pool.query(challenge_query , [
             name ? name : null,
             description ?description : null,
             image ? image : null,
+            calories_burns ? calories_burns : null,
+            time ? time : null,
             created_at ? created_at : null
         ]);
 
@@ -136,6 +140,8 @@ exports.addSeven_by_four = async (req, res) => {
         let week_04_records = [];
 
 
+
+
         for (let i = 0; i < array.length; i++) {
             const element = array[i];
             if(element.week_no){
@@ -153,7 +159,6 @@ exports.addSeven_by_four = async (req, res) => {
                 }
             }
             
-            
         }
 
         console.log("week 1 records are" , week_01_records)
@@ -161,27 +166,46 @@ exports.addSeven_by_four = async (req, res) => {
         console.log("week 3 records are" , week_03_records)
         console.log("week 4 records are" , week_04_records)
 
-        if(week_01_records.length > 0){
-            
+if(week_01_records.length > 0){
                     let query= 'INSERT INTO SevenByFourChallenge_weeks (seven_by_four_challenge_id , week_no , created_at) VALUES ($1 , $2 , $3) RETURNING *';
                     const result = await pool.query(query , [seven_by_four_challenge_id, 1 , created_at]);
                     console.log(result);
 
                     if(result.rows[0]){
                         let week_id  = result.rows[0].week_id;
-
                         for (let i = 0; i < week_01_records.length; i++) {
                             const element = week_01_records[i];
+                            let element_exercises = element.exercises;
+                            let week_days_query= 'INSERT INTO SevenByFourChallenge_week_days (week_id , seven_by_four_challenge_id , day , created_at) VALUES ($1 , $2 , $3 , $4) RETURNING *';
+                            const week_days_result = await pool.query(week_days_query , [week_id, seven_by_four_challenge_id , element.day , created_at]);
 
-                            let week_days_query= 'INSERT INTO SevenByFourChallenge_week_days (week_id , seven_by_four_challenge_id , day , exercises , created_at) VALUES ($1 , $2 , $3 , $4 , $5) RETURNING *';
-                            const week_days_result = await pool.query(week_days_query , [week_id, seven_by_four_challenge_id , element.day , element.exercises , created_at]);
+                            if(week_days_result){
+                                if(week_days_result.rows[0].day_id){
+                                    let day_id = week_days_result.rows[0].day_id;
+                                    for (let i = 0; i < element_exercises.length; i++) {
+                                        const exercise = element_exercises[i];
+                                        console.log(exercise)
 
+                                        let InsertExercise = 'INSERT INTO SevenByFourChallenge_week_day_exercises ( exersise_id , SevenByFourChallenge_week_day_id , reps ,time) VALUES ($1 , $2, $3 , $4 ) RETURNING*'
+                                        let exersiseInsertionResult= await pool.query(InsertExercise ,
+                                         [
+                                            exercise.exercise_id ? exercise.exercise_id: null,
+                                            day_id ? day_id : null,
+                                            exercise.reps ? exercise.reps : null,
+                                            exercise.time ? exercise .time : null
+                                            
+                                        ]);
+
+                                        console.log(exersiseInsertionResult.rows[0])
+                                    }
+                                }
+                            }
+                            
                         }
                     }
-        }
+}
 
-
-        if(week_02_records.length > 0){
+if(week_02_records.length > 0){
             
             let query= 'INSERT INTO SevenByFourChallenge_weeks (seven_by_four_challenge_id , week_no ,created_at) VALUES ($1 , $2 , $3 ) RETURNING *';
             const result = await pool.query(query , [seven_by_four_challenge_id, 2 , created_at]);
@@ -192,10 +216,33 @@ exports.addSeven_by_four = async (req, res) => {
 
                 for (let i = 0; i < week_02_records.length; i++) {
                     const element = week_02_records[i];
+                    let element_exercises = element.exercises;
 
-                    let week_days_query= 'INSERT INTO SevenByFourChallenge_week_days (week_id , seven_by_four_challenge_id , day , exercises , created_at) VALUES ($1 , $2 , $3 , $4 , $5) RETURNING *';
-                    const week_days_result = await pool.query(week_days_query , [week_id, seven_by_four_challenge_id , element.day , element.exercises , created_at]);
 
+                    let week_days_query= 'INSERT INTO SevenByFourChallenge_week_days (week_id , seven_by_four_challenge_id , day  , created_at) VALUES ($1 , $2 , $3 , $4) RETURNING *';
+                    const week_days_result = await pool.query(week_days_query , [week_id, seven_by_four_challenge_id , element.day  , created_at]);
+
+                    if(week_days_result){
+                        if(week_days_result.rows[0].day_id){
+                            let day_id = week_days_result.rows[0].day_id;
+                            for (let i = 0; i < element_exercises.length; i++) {
+                                const exercise = element_exercises[i];
+                                console.log(exercise)
+
+                                let InsertExercise = 'INSERT INTO SevenByFourChallenge_week_day_exercises ( exersise_id , SevenByFourChallenge_week_day_id , reps ,time) VALUES ($1 , $2, $3 , $4 ) RETURNING*'
+                                let exersiseInsertionResult= await pool.query(InsertExercise ,
+                                 [
+                                    exercise.exercise_id ? exercise.exercise_id: null,
+                                    day_id ? day_id : null,
+                                    exercise.reps ? exercise.reps : null,
+                                    exercise.time ? exercise .time : null
+                                    
+                                ]);
+
+                                console.log(exersiseInsertionResult.rows[0])
+                            }
+                        }
+                    }
                 }
             }
 }
@@ -211,10 +258,33 @@ if(week_03_records.length > 0){
 
         for (let i = 0; i < week_03_records.length; i++) {
             const element = week_03_records[i];
+            let element_exercises = element.exercises;
 
-            let week_days_query= 'INSERT INTO SevenByFourChallenge_week_days (week_id , seven_by_four_challenge_id , day , exercises ,created_at ) VALUES ($1 , $2 , $3 , $4 ,$5) RETURNING *';
-            const week_days_result = await pool.query(week_days_query , [week_id, seven_by_four_challenge_id , element.day , element.exercises , created_at]);
 
+            let week_days_query= 'INSERT INTO SevenByFourChallenge_week_days (week_id , seven_by_four_challenge_id , day ,created_at ) VALUES ($1 , $2 , $3 , $4) RETURNING *';
+            const week_days_result = await pool.query(week_days_query , [week_id, seven_by_four_challenge_id , element.day  , created_at]);
+
+              if(week_days_result){
+                        if(week_days_result.rows[0].day_id){
+                            let day_id = week_days_result.rows[0].day_id;
+                            for (let i = 0; i < element_exercises.length; i++) {
+                                const exercise = element_exercises[i];
+                                console.log(exercise)
+
+                                let InsertExercise = 'INSERT INTO SevenByFourChallenge_week_day_exercises ( exersise_id , SevenByFourChallenge_week_day_id , reps ,time) VALUES ($1 , $2, $3 , $4 ) RETURNING*'
+                                let exersiseInsertionResult= await pool.query(InsertExercise ,
+                                 [
+                                    exercise.exercise_id ? exercise.exercise_id: null,
+                                    day_id ? day_id : null,
+                                    exercise.reps ? exercise.reps : null,
+                                    exercise.time ? exercise .time : null
+                                    
+                                ]);
+
+                                console.log(exersiseInsertionResult.rows[0])
+                            }
+                        }
+                    }
         }
     }
 }
@@ -230,10 +300,33 @@ if(week_04_records.length > 0){
 
         for (let i = 0; i < week_04_records.length; i++) {
             const element = week_04_records[i];
+            let element_exercises = element.exercises;
 
-            let week_days_query= 'INSERT INTO SevenByFourChallenge_week_days (week_id , seven_by_four_challenge_id , day , exercises , created_at ) VALUES ($1 , $2 , $3 , $4 ,$5 ) RETURNING *';
-            const week_days_result = await pool.query(week_days_query , [week_id, seven_by_four_challenge_id , element.day , element.exercises , created_at]);
 
+            let week_days_query= 'INSERT INTO SevenByFourChallenge_week_days (week_id , seven_by_four_challenge_id , day , created_at ) VALUES ($1 , $2 , $3 , $4 ) RETURNING *';
+            const week_days_result = await pool.query(week_days_query , [week_id, seven_by_four_challenge_id , element.day , created_at]);
+
+            if(week_days_result){
+                if(week_days_result.rows[0].day_id){
+                    let day_id = week_days_result.rows[0].day_id;
+                    for (let i = 0; i < element_exercises.length; i++) {
+                        const exercise = element_exercises[i];
+                        console.log(exercise)
+
+                        let InsertExercise = 'INSERT INTO SevenByFourChallenge_week_day_exercises ( exersise_id , SevenByFourChallenge_week_day_id , reps ,time) VALUES ($1 , $2, $3 , $4 ) RETURNING*'
+                        let exersiseInsertionResult= await pool.query(InsertExercise ,
+                         [
+                            exercise.exercise_id ? exercise.exercise_id: null,
+                            day_id ? day_id : null,
+                            exercise.reps ? exercise.reps : null,
+                            exercise.time ? exercise .time : null
+                            
+                        ]);
+
+                        console.log(exersiseInsertionResult.rows[0])
+                    }
+                }
+            }
         }
     }
 }
@@ -312,6 +405,8 @@ if(week_04_records.length > 0){
                 'name', wp.name,
                 'description', wp.description,
                 'image', wp.image,
+                'calories_burns'  , wp.calories_burns,
+                'time' , wp.time,
                 'trash', wp.trash,
                 'created_at', wp.created_at,
                 'updated_at', wp.updated_at,
@@ -334,16 +429,30 @@ if(week_04_records.length > 0){
                                         'exercises' , (
                                             SELECT json_agg(
                                                          json_build_object(
+                                                             'SevenByFourChallenge_week_day_exercise_id', e.SevenByFourChallenge_week_day_exercise_id,
                                                              'exersise_id', e.exersise_id,
-                                                             'title', e.title,
-                                                             'description', e.description,
-                                                             'animation', e.animation,
-                                                             'video_link', e.video_link,
+                                                             'SevenByFourChallenge_week_day_id', e.SevenByFourChallenge_week_day_id,
+                                                             'reps', e.reps,
+                                                             'time', e.time,
+                                                             'exercise_details' , (
+                                                                SELECT json_agg(
+                                                                             json_build_object(
+                                                                                 'exersise_id', ex.exersise_id,
+                                                                                 'title', ex.title,
+                                                                                 'description', ex.description,
+                                                                                 'animation', ex.animation,
+                                                                                 'video_link', ex.video_link,
+                                                                                 'created_at', ex.created_at
+                                                                             )
+                                                                         )
+                                                                FROM exersises ex
+                                                                WHERE ex.exersise_id = e.exersise_id
+                                                            ),
                                                              'created_at', e.created_at
                                                          )
                                                      )
-                                            FROM exersises e
-                                            WHERE e.exersise_id = ANY(wd.exercises)
+                                            FROM SevenByFourChallenge_week_day_exercises e
+                                            WHERE e.SevenByFourChallenge_week_day_id =wd.day_id
                                         ),
                                         'trash' , wd.trash,
                                         'created_at', wd.created_at,
@@ -392,7 +501,6 @@ if(week_04_records.length > 0){
       }
 
 }
-
 
 exports.update_sevenByFour = async (req, res) => {
     const client = await pool.connect();
@@ -460,7 +568,6 @@ exports.update_sevenByFour = async (req, res) => {
       }
 }
 
-
 exports.addExersiseToSevenByFourChallenge = async (req, res) => {
     const client = await pool.connect();
     try {
@@ -468,48 +575,126 @@ exports.addExersiseToSevenByFourChallenge = async (req, res) => {
         const seven_by_four_challenge_id = req.body.seven_by_four_challenge_id;
         const week_id = req.body.week_id;
         const day_id = req.body.day_id;
-        const exersise_ids = req.body.exersise_ids
+        const exersises = req.body.exersises
 
 
 
-        if (!seven_by_four_challenge_id || !week_id || !day_id || !exersise_ids) {
+        if (!seven_by_four_challenge_id  || !day_id || !exersises) {
             return (
                 res.json({
-                    message: "must provide seven_by_four_challenge_id  , week_id , day_id , exersise_ids[]",
+                    message: "must provide seven_by_four_challenge_id  , day_id , exersises[]",
                     status: false
                 })
             )
         }
 
 
-        let query = 'UPDATE SevenByFourChallenge_week_days SET ';
-        let index = 4;
-        let values =[seven_by_four_challenge_id , week_id , day_id];
 
+    for (let i = 0; i < exersises.length; i++) {
+        const element = exersises[i];
+        let foundQuery = 'SELECT * FROM SevenByFourChallenge_week_day_exercises WHERE SevenByFourChallenge_week_day_id = $1 AND exersise_id = $2'
+        let foundResult = await pool.query(foundQuery , [day_id , element.exersise_id] )        
+        if(!foundResult.rows[0]){
+            console.log('true')
+            const query = 'INSERT INTO SevenByFourChallenge_week_day_exercises (exersise_id , SevenByFourChallenge_week_day_id , reps ,time) VALUES ($1 , $2, $3 , $4 ) RETURNING*'
+            let result = await pool.query(query , 
+                [
+                    element.exersise_id ? element.exersise_id : null,
+                    day_id ? day_id : null,
+                    element.reps ? element.reps : null,
+                    element.time ? element.time : null
+                ])
+        }   
         
-        if(exersise_ids){
-            query+= `exercises = ARRAY_CAT(exercises ,  $${index} )`;
-            values.push(exersise_ids)
-            index ++
-        }
-      
+        
+    }
 
-        query += 'WHERE seven_by_four_challenge_id = $1 AND week_id = $2 AND day_id =$3 RETURNING*'
-        query = query.replace(/,\s+WHERE/g, " WHERE");
-        console.log(query);
 
-       const result = await pool.query(query , values);
+    const queryGetSevenByFour = `SELECT array_agg(
+        json_build_object(
+            'seven_by_four_challenge_id', wp.seven_by_four_challenge_id,
+            'name', wp.name,
+            'description', wp.description,
+            'image', wp.image,
+            'calories_burns'  , wp.calories_burns,
+            'time' , wp.time,
+            'trash', wp.trash,
+            'created_at', wp.created_at,
+            'updated_at', wp.updated_at,
+            'weeks', (
+                SELECT array_agg(
+                    json_build_object(
+                        'week_id', wi.week_id,
+                        'seven_by_four_challenge_id' , wi.seven_by_four_challenge_id,
+                        'week_no' , wi.week_no,
+                        'trash' , wi.trash,
+                        'created_at', wi.created_at,
+                        'updated_at', wi.updated_at,
+                        'week_days' , (
+                            SELECT array_agg(
+                                json_build_object(
+                                    'day_id', wd.day_id,
+                                    'seven_by_four_challenge_id' , wd.seven_by_four_challenge_id,
+                                    'day' , wd.day,
+                                    'week_id' , wd.week_id,
+                                    'exercises' , (
+                                        SELECT json_agg(
+                                                     json_build_object(
+                                                         'SevenByFourChallenge_week_day_exercise_id', e.SevenByFourChallenge_week_day_exercise_id,
+                                                         'exersise_id', e.exersise_id,
+                                                         'SevenByFourChallenge_week_day_id', e.SevenByFourChallenge_week_day_id,
+                                                         'reps', e.reps,
+                                                         'time', e.time,
+                                                         'exercise_details' , (
+                                                            SELECT json_agg(
+                                                                         json_build_object(
+                                                                             'exersise_id', ex.exersise_id,
+                                                                             'title', ex.title,
+                                                                             'description', ex.description,
+                                                                             'animation', ex.animation,
+                                                                             'video_link', ex.video_link,
+                                                                             'created_at', ex.created_at
+                                                                         )
+                                                                     )
+                                                            FROM exersises ex
+                                                            WHERE ex.exersise_id = e.exersise_id
+                                                        ),
+                                                         'created_at', e.created_at
+                                                     )
+                                                 )
+                                        FROM SevenByFourChallenge_week_day_exercises e
+                                        WHERE e.SevenByFourChallenge_week_day_id =wd.day_id
+                                    ),
+                                    'trash' , wd.trash,
+                                    'created_at', wd.created_at,
+                                    'updated_at', wd.updated_at
+                                )
+                            )
+                            FROM SevenByFourChallenge_week_days wd
+                            WHERE wd.week_id = wi.week_id
+                        )
+                    )
+                )
+                FROM SevenByFourChallenge_weeks wi
+                WHERE wi.seven_by_four_challenge_id = wp.seven_by_four_challenge_id
+            )
+        )
+    )
+    FROM SevenByFourChallenge wp
+    WHERE seven_by_four_challenge_id =$1 `;
 
-        if (result.rows[0]) {
+    const getSenvenByFour = await pool.query(queryGetSevenByFour , [seven_by_four_challenge_id]);
+
+        if (getSenvenByFour.rows[0]) {
             res.json({
-                message: "Updated",
+                message: "Exercices Added",
                 status: true,
-                result: result.rows[0]
+                result: getSenvenByFour.rows[0]
             })
         }
         else {
             res.json({
-                message: "Could not update . Record With this Id may not found or req.body may be empty , check if ,week , and day is created.",
+                message: "Could not add exercises into seven by four due to some reason",
                 status: false,
             })
         }
@@ -723,6 +908,7 @@ exports.getAllSevenByFour= async (req, res) => {
       }
 
 }
+
 exports.getSevenByFour= async (req, res) => {
     const client = await pool.connect();
     try {
@@ -1194,6 +1380,7 @@ exports.getAllTrashRecords = async (req, res) => {
         client.release();
       }
 }
+
 function validateArray(arr) {
     let currentWeek = 1;
     let currentDay = 1;
@@ -1224,4 +1411,5 @@ function validateArray(arr) {
   
     return true;
   }
-  
+
+

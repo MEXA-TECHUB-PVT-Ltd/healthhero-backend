@@ -763,7 +763,7 @@ exports.getHistory = async (req,res)=>{
         if(intakes){
             res.json({
                 message : "Food Intake record history",
-                status : false,
+                status : true,
                 result : {
                     macrosTaken : macrosTaken ,
                     foodIntakesToday : intakes
