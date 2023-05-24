@@ -195,6 +195,8 @@ CREATE TABLE IF NOT EXISTS SevenByFourChallenge(
   name TEXT,
   description TEXT,
   image TEXT,
+  calories_burns FLOAT,
+  time TEXT,
   trash BOOLEAN DEFAULT false,
   created_at TEXT,
   updated_at TIMESTAMP DEFAULT NOW()
@@ -212,15 +214,28 @@ CREATE TABLE IF NOT EXISTS SevenByFourChallenge_weeks(
 );
 
 
+
+
 CREATE TABLE IF NOT EXISTS SevenByFourChallenge_week_days(
   day_id INT NOT NULL DEFAULT nextval('my_sequence') PRIMARY KEY,
   week_id INTEGER,
   seven_by_four_challenge_id INTEGER,
   plan_description TEXT,
   day INTEGER,
-  exercises INT[],
   trash BOOLEAN DEFAULT false,
   created_at TEXT,
+  updated_at TIMESTAMP DEFAULT NOW()
+);
+
+
+CREATE TABLE IF NOT EXISTS SevenByFourChallenge_week_day_exercises(
+  SevenByFourChallenge_week_day_exercise_id INT NOT NULL DEFAULT nextval('my_sequence') PRIMARY KEY,
+  exersise_id INTEGER,
+  SevenByFourChallenge_week_day_id INT, 
+  reps TEXT,
+  time TEXT,
+  trash BOOLEAN DEFAULT false,
+  created_at TIMESTAMP DEFAULT NOW(),
   updated_at TIMESTAMP DEFAULT NOW()
 );
 
