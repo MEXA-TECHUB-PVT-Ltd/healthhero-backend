@@ -16,6 +16,13 @@ router.get("/getAllSevenByFour" , controller.getAllSevenByFour);
 router.put("/deleteTemporarily" , controller.deleteTemporarily);
 router.put("/recover_record" , controller.recover_record);
 router.get("/getAllTrashRecords" , controller.getAllTrashRecords);
+router.post("/start_seven_by_four" , controller.start_seven_by_four);
+router.put("/completeDayWorkout" , controller.completeDayWorkout);
+router.get("/getUserWorkoutStartedDays" , controller.getUserWorkoutStartedDays);
+router.delete("/resetProgress" , controller.restartSeven_byFourProgress);
+
+
+
 
 
 module.exports = router;
