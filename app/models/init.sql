@@ -189,7 +189,6 @@ CREATE TABLE IF NOT EXISTS water_tracker_records(
 );
 
 
-
 CREATE TABLE IF NOT EXISTS SevenByFourChallenge(
   seven_by_four_challenge_id INT NOT NULL DEFAULT nextval('my_sequence') PRIMARY KEY,
   name TEXT,
@@ -203,7 +202,6 @@ CREATE TABLE IF NOT EXISTS SevenByFourChallenge(
 );
 
 
-
 CREATE TABLE IF NOT EXISTS SevenByFourChallenge_weeks(
   week_id INT NOT NULL DEFAULT nextval('my_sequence') PRIMARY KEY,
   seven_by_four_challenge_id INTEGER,
@@ -212,8 +210,6 @@ CREATE TABLE IF NOT EXISTS SevenByFourChallenge_weeks(
   created_at TEXT,
   updated_at TIMESTAMP DEFAULT NOW()
 );
-
-
 
 
 CREATE TABLE IF NOT EXISTS SevenByFourChallenge_week_days(
@@ -239,6 +235,22 @@ CREATE TABLE IF NOT EXISTS SevenByFourChallenge_week_day_exercises(
   updated_at TIMESTAMP DEFAULT NOW()
 );
 
+CREATE TABLE IF NOT EXISTS user_inAction_sevByFour(
+  user_inAction_sevByFour_id INT NOT NULL DEFAULT nextval('my_sequence') PRIMARY KEY ,
+  user_id INTEGER,
+  sev_by_fourChallenge_id INTEGER,
+  week_id INTEGER,
+  day_id INTEGER,
+  status TEXT,
+  time TEXT,
+  completed_at TEXT,
+  trash BOOLEAN DEFAULT false,
+  created_at TEXT,
+  updated_at TIMESTAMP DEFAULT NOW()
+);
+
+
+
 CREATE TABLE IF NOT EXISTS diet_plan(
   diet_plan_id INT NOT NULL DEFAULT nextval('my_sequence') PRIMARY KEY,
   user_id INTEGER,
@@ -254,6 +266,7 @@ CREATE TABLE IF NOT EXISTS diet_plan(
   created_at TEXT,
   updated_at TIMESTAMP DEFAULT NOW()
 );
+
 
 CREATE TABLE IF NOT EXISTS food(
   food_id INT NOT NULL DEFAULT nextval('my_sequence') PRIMARY KEY,
