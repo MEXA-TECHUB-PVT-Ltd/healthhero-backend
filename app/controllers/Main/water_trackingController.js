@@ -235,7 +235,6 @@ exports.deleteWater_tracker= async (req, res) => {
       }
 }
 
-
 exports.add_record_water_tracker = async (req, res) => {
     const client = await pool.connect();
     try {
@@ -256,13 +255,13 @@ exports.add_record_water_tracker = async (req, res) => {
             )
         }
 
-        const foundQuery = 'SELECT * FROM water_tracker_records WHERE user_id = $1 AND water_tracker_id = $2 AND DATE(created_at) = CURRENT_DATE;';
-        const foundResult = await pool.query(foundQuery , [user_id , water_tracker_id]);
+        const foundQuery = 'SELECT * FROM water_tracker_records WHERE user_id = $1 AND water_tracker_id = $2 AND created_at =  $3';
+        const foundResult = await pool.query(foundQuery , [user_id , water_tracker_id , created_at]);
 
         if(foundResult.rowCount>0){
             console.log('updated')
-            query =   `UPDATE water_tracker_records SET quantity = $1 WHERE user_id = $2 AND water_tracker_id = $3 RETURNING*`;
-            result = await pool.query(query , [quantity , user_id , water_tracker_id])
+            query =   `UPDATE water_tracker_records SET quantity = $1 WHERE user_id = $2 AND water_tracker_id = $3 AND water_tracker_record_id = $4 RETURNING*`;
+            result = await pool.query(query , [quantity , user_id , water_tracker_id , foundResult.rows[0].water_tracker_record_id])
         }
         else{
             query = 'INSERT INTO water_tracker_records ( user_id , water_tracker_id ,quantity , created_at) VALUES ($1 , $2 , $3 , $4) RETURNING*'
@@ -347,6 +346,7 @@ exports.deleteWater_tracker_record= async (req, res) => {
         client.release();
       }
 }
+
 exports.get_daily_tracking= async (req, res) => {
     const client = await pool.connect();
     try {
