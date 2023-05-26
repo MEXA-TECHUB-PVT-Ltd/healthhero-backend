@@ -359,3 +359,14 @@ CREATE TABLE IF NOT EXISTS user_height(
   updated_at TIMESTAMP DEFAULT NOW()
 );
 
+CREATE TABLE IF NOT EXISTS reminder(
+  reminder_id INT NOT NULL DEFAULT nextval('my_sequence') PRIMARY KEY,
+  user_id INTEGER,
+  time TEXT,
+  days TEXT[],
+  active_status BOOLEAN ,
+  trash BOOLEAN DEFAULT false,
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW()
+);
+

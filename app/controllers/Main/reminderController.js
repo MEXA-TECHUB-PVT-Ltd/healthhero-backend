@@ -7,17 +7,20 @@ exports.create_reminder = async (req, res) => {
         const user_id = req.body.user_id;
         const time = req.body.time;
         const days = req.body.days;
+        const active_status = req.body.active_status;
 
 
 
-        const query = 'INSERT INTO reminder (user_id ,time,days) VALUES ($1 , $2 , $3) RETURNING*'
+
+
+        const query = 'INSERT INTO reminder (user_id ,time,days , active_status) VALUES ($1 , $2 , $3 , $4) RETURNING*'
         const result = await pool.query(query , 
             [
                 user_id ? user_id : null,
                 time ? time : null,
                 days ?days : null,
+                active_status ? active_status : false
          
-              
             ]);
 
 
@@ -380,6 +383,100 @@ exports.getAllTrashRecords = async (req, res) => {
         else{
             res.status(404).json({
                 message: "Could not find trash records",
+                status: false,
+            })
+        }
+
+    }
+    catch (err) {
+        res.json({
+            message: "Error",
+            status: false,
+            error: err.message
+        })
+    }
+    finally {
+        client.release();
+      }
+}
+exports.active_reminder = async (req, res) => {
+    const client = await pool.connect();
+    try {
+
+        const reminder_id = req.body.reminder_id;
+
+        if (!reminder_id) {
+            return (
+                res.json({
+                    message: "Please provide reminder_id ",
+                    status: false
+                })
+            )
+        }
+
+        let query = 'UPDATE reminder SET active_status = $2 WHERE reminder_id = $1 RETURNING*';
+        let values = [reminder_id , true];
+
+       const result = await pool.query(query , values);
+
+
+        if (result.rows[0]) {
+            res.json({
+                message: "Updated",
+                status: true,
+                result: result.rows[0]
+            })
+        }
+        else {
+            res.json({
+                message: "Could not update . Record With this Id may not found or req.body may be empty",
+                status: false,
+            })
+        }
+
+    }
+    catch (err) {
+        res.json({
+            message: "Error",
+            status: false,
+            error: err.message
+        })
+    }
+    finally {
+        client.release();
+      }
+}
+exports.in_active_reminder = async (req, res) => {
+    const client = await pool.connect();
+    try {
+
+        const reminder_id = req.body.reminder_id;
+
+        if (!reminder_id) {
+            return (
+                res.json({
+                    message: "Please provide reminder_id ",
+                    status: false
+                })
+            )
+        }
+
+        let query = 'UPDATE reminder SET active_status = $2 WHERE reminder_id = $1 RETURNING*';
+        let values = [reminder_id , false];
+
+       const result = await pool.query(query , values);
+
+
+        if (result.rows[0]) {
+            res.json({
+                message: "Updated",
+                status: true,
+                result: result.rows[0]
+            })
+        }
+        else {
+            res.json({
+                message: "Could not update . Record With this Id may not found or req.body may be empty",
                 status: false,
             })
         }
