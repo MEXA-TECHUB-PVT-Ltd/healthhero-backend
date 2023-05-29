@@ -1632,6 +1632,15 @@ exports.getWeeklyReportOfUser = async (req, res) => {
 
             
         }
+        else{
+            return(
+                res.json({
+                    message: "Could not find any started workout for this user",
+                    status : false,
+                    result : null
+                })
+            )
+        }
         
 
         const dayNoQuery= 'SELECT * FROM week_goals WHERE user_id = $1';
@@ -2210,7 +2219,7 @@ function getStartDateOfWeek(date, day_no , startDayOfWeek=1) {
     const daysToSubtract = (currentDayOfWeek - startDayOfWeek + 7) % 7;
   
     // Adjust the start date by subtracting the days and adding the daysToAdd
-    startDate.setDate(startDate.getDate() - daysToSubtract + day_no);
+    startDate.setDate(startDate.getDate() - daysToSubtract + (day_no-1));
   
     return startDate;
 }
