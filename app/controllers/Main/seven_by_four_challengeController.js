@@ -22,8 +22,8 @@ exports.addSeven_by_four = async (req, res) => {
             )
         }
 
-        const foundRecordQuery = 'SELECT * FROM SevenByFourChallenge LIMIT 1';
-        const foundRecordResult = await pool.query(foundRecordQuery)
+        const foundRecordQuery = 'SELECT * FROM SevenByFourChallenge WHERE trash = $1 LIMIT 1';
+        const foundRecordResult = await pool.query(foundRecordQuery , [false])
         if(foundRecordResult.rows[0]){
             return(
                 res.json({
