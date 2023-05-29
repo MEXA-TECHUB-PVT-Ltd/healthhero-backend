@@ -370,3 +370,4 @@ CREATE TABLE IF NOT EXISTS reminder(
   updated_at TIMESTAMP DEFAULT NOW()
 );
 
+

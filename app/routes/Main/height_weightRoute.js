@@ -15,4 +15,10 @@ router.get("/getheightHistory",controller.getheightHistory)
 router.get("/getUserheight",controller.getUserheight)
 router.delete("/deleteheight",controller.deleteheight)
 
+
+router.get("/getWeekilyWeightReport",controller.getWeekilyWeightReport)
+
+
+
+
 module.exports=router
