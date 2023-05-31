@@ -302,8 +302,6 @@ exports.getAnWorkoutPlanExersise= async (req, res) => {
 
 }
 
-
-
 exports.like_exersise = async (req, res) => {
     const client = await pool.connect();
     try {
@@ -509,15 +507,79 @@ exports.exersise_of_day= async (req, res) => {
     const client = await pool.connect();
     try {
         
-        const query = `SELECT
-        *
-        FROM
-        exersises WHERE trash=$1 OFFSET floor(random() * (
-            SELECT
-                COUNT(*)
-                FROM exersises))
-            LIMIT 1;`;
-
+        const query = `
+        SELECT
+            we.workout_plan_id,
+            we.category_id,
+            (
+                SELECT 
+                    json_build_object(
+                        'workout_category_id', wcc.workout_category_id,
+                        'category_name', wcc.category_name,
+                        'trash' , wcc.trash,
+                        'created_at' , wcc.created_at,
+                        'updated_at' , wcc.updated_at
+                    )
+                FROM workout_categories wcc
+                WHERE wcc.workout_category_id = we.category_id
+            ) AS category_details,
+            we.workout_title,
+            we.image,
+            we.focus_area,
+            we.paid_status,
+            we.level_of_workout,
+            we.description,
+            we.time,
+            we.calories_burnt,
+            we.trash,
+            we.created_at,
+            we.updated_at,
+            (
+                SELECT json_agg(
+                    json_build_object(
+                        'exersise_id', e.exersise_id,
+                        'workout_plan_exersise_id', e.workout_plan_exersise_id,
+                        'reps' , e.reps,
+                        'time' , e.time,
+                        'trash' , e.trash,
+                        'created_at' , e.created_at,
+                        'updated_at' , e.updated_at,
+                        'exersise_details' , (
+                            SELECT 
+                                json_build_object(
+                                    'exersise_id', ex.exersise_id,
+                                    'title', ex.title,
+                                    'description' , ex.description,
+                                    'animation' , ex.animation,
+                                    'video_link' , ex.video_link,
+                                    'trash' , ex.trash,
+                                    'created_at' , ex.created_at,
+                                    'updated_at' , ex.updated_at
+                                )
+                            FROM exersises ex
+                            WHERE ex.exersise_id = e.exersise_id
+                        )
+                    )
+                )
+                FROM (
+                    SELECT *
+                    FROM workout_plan_exersises
+                    WHERE workout_plan_id = we.workout_plan_id
+                    ORDER BY random()
+                    LIMIT 1
+                ) e
+            ) AS workout_plan_exersises
+        FROM workout_plans we
+        WHERE we.trash = $1
+        AND EXISTS (
+            SELECT 1
+            FROM workout_plan_exersises wpe
+            WHERE wpe.workout_plan_id = we.workout_plan_id
+        )
+        ORDER BY random()
+        LIMIT 1;
+    `;
+    
         const result = await pool.query(query , [false]);
 
         if (result.rowCount>0) {
