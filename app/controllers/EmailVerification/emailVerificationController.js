@@ -23,6 +23,7 @@ exports.sendEmail = async (req, res) => {
 
         const found_email_query = 'SELECT * FROM users WHERE email = $1'
         const foundResult = await pool.query(found_email_query, [email])
+        console.log(foundResult)
 
 
         if (foundResult.rowCount > 0) {
@@ -32,7 +33,7 @@ exports.sendEmail = async (req, res) => {
             const found_email_query = 'SELECT * FROM admins WHERE email = $1'
             const foundResult = await pool.query(found_email_query, [email])
 
-            if (foundResult) {
+            if (foundResult.rows[0]) {
                 sendOTPVerificationEmail(foundResult.rows[0].email, res)
             }
             else {
@@ -46,6 +47,7 @@ exports.sendEmail = async (req, res) => {
         
     }
     catch (err) {
+        console.log(err)
         res.json({
             message: "Error Occurred",
             status: false,

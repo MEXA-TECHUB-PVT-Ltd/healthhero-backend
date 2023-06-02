@@ -811,39 +811,45 @@ exports.getSubscribedUsers = async (req, res) => {
         const query = `SELECT
         json_agg(
             json_build_object(
-            'user_subscription_id', us.user_subscription_id,
-              'subscription_status', us.subscription_status,
-              'add_removal_status', us.add_removal_status,
-              'created_at', us.created_at,
-             'user_details', (
-              SELECT json_agg(
-                json_build_object
-                (
-                    'user_id', u.user_id,
-                    'user_name', u.user_name,
-                     'email', u.email,
-                    'password', u.password,
-                    'focused_areas', u.focused_areas,
-                    'gender', u.gender,
-                    'device_id', u.device_id,
-                    'block', u.block,
-                    'height', u.height,
-                    'weight', u.weight,
-                    'height_unit', u.height_unit,
-                    'weight_unit', u.weight_unit,
-                    'created_at', u.created_at,
-                    'trash', u.trash,
-                    'updated_at', u.updated_at
-                )
+                'user_subscription_id', us.user_subscription_id,
+                'subscription_status', us.subscription_status,
+                'add_removal_status', us.add_removal_status,
+                'created_at', us.created_at,
+                'user_details',
+                CASE
+                    WHEN u.user_id IS NOT NULL THEN (
+                        SELECT json_agg(
+                            json_build_object(
+                                'user_id', u.user_id,
+                                'user_name', u.user_name,
+                                'email', u.email,
+                                'password', u.password,
+                                'focused_areas', u.focused_areas,
+                                'gender', u.gender,
+                                'device_id', u.device_id,
+                                'block', u.block,
+                                'height', u.height,
+                                'weight', u.weight,
+                                'height_unit', u.height_unit,
+                                'weight_unit', u.weight_unit,
+                                'created_at', u.created_at,
+                                'trash', u.trash,
+                                'updated_at', u.updated_at
+                            )
+                        )
+                        FROM users u
+                        WHERE u.user_id = us.user_id
+                    )
+                    ELSE NULL
+                END
             )
-            FROM users u
-            WHERE u.user_id = us.user_id
-          )
-        )
         ) 
-        FROM user_subscription us
-        WHERE us.subscription_status = $1
-      ;
+    FROM user_subscription us
+    LEFT JOIN users u ON u.user_id = us.user_id
+    WHERE us.subscription_status = $1
+      AND u.user_id IS NOT NULL;
+    ;
+
       `;
         const result = await pool.query(query , [true]);
 
