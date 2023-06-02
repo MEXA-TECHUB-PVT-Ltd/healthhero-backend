@@ -260,8 +260,12 @@ exports.deleteTemporarily = async (req, res) => {
             )
         }
 
-        const query = 'UPDATE workout_categories SET trash=$2 WHERE workout_category_id = $1 RETURNING *';
-        const result = await pool.query(query , [workout_category_id , true]);
+        const date = new Date(Date.now())
+        let updated_at = date.toISOString()
+        console.log(updated_at)
+
+        const query = 'UPDATE workout_categories SET trash=$2 , updated_at = $3 WHERE workout_category_id = $1 RETURNING *';
+        const result = await pool.query(query , [workout_category_id , true , updated_at]);
 
         if(result.rowCount>0){
             res.status(200).json({
@@ -303,8 +307,13 @@ exports.recover_record = async (req, res) => {
             )
         }
 
-        const query = 'UPDATE workout_categories SET trash=$2 WHERE workout_category_id = $1 RETURNING *';
-        const result = await pool.query(query , [workout_category_id , false]);
+
+        const date = new Date(Date.now())
+        let updated_at = date.toISOString()
+        console.log(updated_at)
+
+        const query = 'UPDATE workout_categories SET trash=$2 ,  updated_at = $3  WHERE workout_category_id = $1 RETURNING *';
+        const result = await pool.query(query , [workout_category_id , false , updated_at]);
 
         if(result.rowCount>0){
             res.status(200).json({
