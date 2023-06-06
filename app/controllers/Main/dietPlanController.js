@@ -351,12 +351,12 @@ exports.getDietPlan = async (req, res) => {
             }
         }
 
-        if (result) {
+        if (result.rows[0]) {
             res.json({
                 message: "Fetched",
                 status: true,
                 result: {
-                    fetched_record: result,
+                    fetched_record: result.rows[0],
                     calories_needed_per_day: calories_needed,
                     macros: macros
                 }
@@ -381,7 +381,6 @@ exports.getDietPlan = async (req, res) => {
     }
 
 }
-
 
 exports.deleteDietPlan = async (req, res) => {
     const client = await pool.connect();
@@ -428,7 +427,6 @@ exports.deleteDietPlan = async (req, res) => {
         client.release();
     }
 }
-
 
 exports.addFoodIntake = async (req, res) => {
     const client = await pool.connect();
@@ -614,7 +612,6 @@ exports.addFoodIntake = async (req, res) => {
     }
 }
 
-
 exports.getDailyConsumption = async (req,res)=>{
     const client = await pool.connect();
 
@@ -703,7 +700,6 @@ exports.getDailyConsumption = async (req,res)=>{
     }
 }
 
-
 exports.getHistory = async (req,res)=>{
     const client = await pool.connect();
 
@@ -791,7 +787,6 @@ exports.getHistory = async (req,res)=>{
         client.release();
     }
 }
-
 
 exports.deleteTemporarily = async (req, res) => {
     const client = await pool.connect();
@@ -911,4 +906,85 @@ exports.getAllTrashRecords = async (req, res) => {
     finally {
         client.release();
       }
+}
+
+exports.getDietPlanOfUser = async (req, res) => {
+    const client = await pool.connect();
+    try {
+        const user_id = req.query.user_id;
+
+
+        if (!user_id) {
+            return (
+                res.json({
+                    message: "Please provide user_id ",
+                    status: false
+                })
+            )
+        }
+
+        const query = `SELECT * FROM diet_plan Where user_id = $1 AND trash=$2`;
+
+        let result = await pool.query(query, [user_id , false]);
+
+        if (result.rows[0]) {
+            result = result.rows[0]
+        }else{
+            result = null
+        }
+
+        let calories_needed;
+        if (result) {
+            macros = fitness_calculator.macros(result.gender, result.age, result.height, result.weight, result.activity_status, result.purpose);
+            macros = macros.balancedDietPlan;
+            let calories = fitness_calculator.calorieNeeds(result.gender, result.age, result.height, result.weight, result.activity_status)
+
+            if (calories) {
+                if (result.purpose == 'balance') {
+                    calories_needed = calories.balance
+                }
+                else if (result.purpose == 'mildWeightLoss') {
+                    calories_needed = calories.mildWeightLoss
+                }
+                else if (result.purpose == 'mildWeightGain') {
+                    calories_needed = calories.mildWeightGain
+                }
+                else if (result.purpose == 'heavyWeightLoss') {
+                    calories_needed = calories.heavyWeightLoss
+                }
+                else if (result.purpose == 'heavyWeightGain') {
+                    calories_needed = calories.heavyWeightGain
+                }
+            }
+        }
+
+        if (result) {
+            res.json({
+                message: "Diet plan for user found",
+                status: true,
+                result: {
+                    fetched_record: result,
+                    calories_needed_per_day: calories_needed,
+                    macros: macros
+                }
+            })
+        }
+        else {
+            res.json({
+                message: "Not able to find any diet plan for user",
+                status: false
+            })
+        }
+    }
+    catch (err) {
+        res.json({
+            message: "Error",
+            status: false,
+            error: err.message
+        })
+    }
+    finally {
+        client.release();
+    }
+
 }
