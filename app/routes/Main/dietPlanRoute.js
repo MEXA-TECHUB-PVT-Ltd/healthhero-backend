@@ -10,6 +10,8 @@ router.delete("/delete_diet_plan",controller.deleteDietPlan)
 router.post("/addFoodIntake",controller.addFoodIntake)
 router.get("/getdailyConsumption",controller.getDailyConsumption)
 router.get("/getHistory",controller.getHistory)
+router.get("/getDietPlanOfUser",controller.getDietPlanOfUser);
+
 
 router.put("/deleteTemporarily" , controller.deleteTemporarily);
 router.put("/recover_record" , controller.recover_record);
