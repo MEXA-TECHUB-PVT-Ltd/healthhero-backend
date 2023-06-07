@@ -687,6 +687,7 @@ exports.getDailyConsumption = async (req,res)=>{
         let totalProtein = 0;
         let totalCarbs = 0;
         let totalFats = 0;
+        let caloriesTaken = 0;
         if (intakes) {
             for (let i = 0; i < intakes.length; i++) {
                 const foodDetails = intakes[i].food_details;
@@ -694,6 +695,7 @@ exports.getDailyConsumption = async (req,res)=>{
                     totalProtein += foodDetails.protein * (intakes[i].quantity ? intakes[i].quantity:1) || 0;
                     totalCarbs += foodDetails.carbs * (intakes[i].quantity ? intakes[i].quantity:1) || 0;
                     totalFats += foodDetails.fats * (intakes[i].quantity ? intakes[i].quantity:1) || 0;
+                    caloriesTaken += foodDetails.energy_calories * (intakes[i].quantity ? intakes[i].quantity:1) || 0;
                 }
             }
         };
@@ -712,6 +714,8 @@ exports.getDailyConsumption = async (req,res)=>{
                 result : {
                     macorsRequired : macrosRequired,
                     macrosTaken : macrosTaken ,
+                    caloreis_required : calories_needed,
+                    calories_consumed : caloriesTaken,
                     diet_plan_details : result,
                     foodIntakesToday : intakes
                     
@@ -769,6 +773,7 @@ exports.getHistory = async (req,res)=>{
 
         let calories_needed;
         let macrosRequired;
+        
         if (result) {
             macros = fitness_calculator.macros(result.gender, result.age, result.height, result.weight, result.activity_status, result.purpose);
             macros = macros.balancedDietPlan;
@@ -817,6 +822,8 @@ exports.getHistory = async (req,res)=>{
         let totalProtein = 0;
         let totalCarbs = 0;
         let totalFats = 0;
+        let caloriesTaken = 0;
+
         if (intakes) {
             for (let i = 0; i < intakes.length; i++) {
                 const foodDetails = intakes[i].food_details;
@@ -824,6 +831,8 @@ exports.getHistory = async (req,res)=>{
                     totalProtein += foodDetails.protein * (intakes[i].quantity ? intakes[i].quantity:1) || 0;
                     totalCarbs += foodDetails.carbs * (intakes[i].quantity ? intakes[i].quantity:1) || 0;
                     totalFats += foodDetails.fats * (intakes[i].quantity ? intakes[i].quantity:1) || 0;
+                    caloriesTaken += foodDetails.energy_calories * (intakes[i].quantity ? intakes[i].quantity:1) || 0;
+
                 }
             }
         };
@@ -842,6 +851,8 @@ exports.getHistory = async (req,res)=>{
                 result : {
                     macrosTaken : macrosTaken ,
                     macrosRequired : macrosRequired , 
+                    caloreis_required : calories_needed,
+                    calories_consumed : caloriesTaken,
                     diet_plan_details : result,
                     foodIntakes : intakes
                 },

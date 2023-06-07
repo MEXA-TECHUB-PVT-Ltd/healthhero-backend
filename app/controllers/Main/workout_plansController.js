@@ -2237,7 +2237,7 @@ async function calculateCaloriesBurned(caloriesBurned, time, workoutTime) {
     const caloriesBurnedInWorkout = Math.round(caloriesPerSecond * totalWorkoutSeconds);
   
     return caloriesBurnedInWorkout;
-  }
+}
   
 
 // take user first workout date , like first ever time he started . 
