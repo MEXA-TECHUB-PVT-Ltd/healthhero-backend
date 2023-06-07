@@ -1737,19 +1737,20 @@ exports.getWeeklyReportOfUser = async (req, res) => {
                     'workout_plan_id' , up.workout_plan_id,
                     'plan_name' , up.plan_name,
                     'description' , up.description,
-                    'workout_plan_exercises', (
+                    'workout_plan_exercises' , (
                         SELECT json_agg(
-                                     json_build_object(
-                                         'exersise_id', e.exersise_id,
-                                         'title', e.title,
-                                         'description', e.description,
-                                         'animation', e.animation,
-                                         'video_link', e.video_link,
-                                         'created_at', e.created_at
-                                     )
-                                 )
+                            json_build_object(
+                                'exersise_id', e.exersise_id,
+                                'title', e.title,
+                                'description', e.description,
+                                'animation', e.animation,
+                                'video_link', e.video_link,
+                                'created_at', e.created_at
+                            )
+                        )
                         FROM exersises e
-                        WHERE e.exersise_id = ANY(up.exersise_ids)
+                        JOIN workout_plan_exersises wpe ON e.exersise_id = wpe.exersise_id
+                        WHERE wpe.workout_plan_id = up.workout_plan_id
                     ),
                     'status' , up.status,
                     'added_by' , 'user',
@@ -1805,10 +1806,15 @@ for (let i = 0; i < records.length; i++) {
         console.log("calories burnt" , element.workout_plan.time);
         console.log("calories burnt" , element.time);
 
-        
-        let calories_burned_by_user = await calculateCaloriesBurned(element.workout_plan.calories_burnt , element.workout_plan.time , element.time);
-        console.log("shahfioa" ,calories_burned_by_user)
-        element.calories_burned_by_user = calories_burned_by_user;
+        if(element.workout_plan.calories_burnt || element.workout_plan.time){
+            let calories_burned_by_user = await calculateCaloriesBurned(element.workout_plan.calories_burnt , element.workout_plan.time , element.time);
+            console.log("shahfioa" ,calories_burned_by_user)
+            element.calories_burned_by_user = calories_burned_by_user;
+        }
+        else{
+            element.calories_burned_by_user = 0;
+        }
+     
     }
 }
 
@@ -1841,7 +1847,14 @@ for (let i = 0; i < records.length; i++) {
     for (let j = 0; j < record.length; j++) {
         let element = record[j];
      
-        total_week_calories_to_burn = total_week_calories_to_burn+ element.workout_plan.calories_burnt;
+
+        if(element.workout_plan.calories_burnt){
+            total_week_calories_to_burn = total_week_calories_to_burn+ element.workout_plan.calories_burnt;
+        }
+        else{
+            total_week_calories_to_burn= total_week_calories_to_burn +0;
+        }
+       
 
     }
     console.log("total calories" , total_week_calories_to_burn)

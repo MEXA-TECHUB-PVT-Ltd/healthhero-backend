@@ -157,13 +157,11 @@ CREATE TABLE IF NOT EXISTS user_plans(
   user_id INTEGER,
   plan_name TEXT,
   description TEXT,
-  exersise_ids INT[],
   status TEXT DEFAULT 'unpaid',
   trash BOOLEAN DEFAULT false,
   created_at TEXT,
   updated_at TIMESTAMP DEFAULT NOW()
 );
-
 
 
 CREATE TABLE IF NOT EXISTS water_tracker(
