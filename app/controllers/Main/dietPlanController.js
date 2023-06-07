@@ -510,10 +510,11 @@ exports.addFoodIntake = async (req, res) => {
         ROW_TO_JSON(food.*) AS food_details 
       FROM 
         daily_food_intake 
-        JOIN food ON food.food_id = daily_food_intake.food_id        
+        LEFT OUTER JOIN food ON food.food_id = daily_food_intake.food_id        
        WHERE user_id = $1 AND  TO_DATE(daily_food_intake.created_at, 'YYYY-MM-DD') = CURRENT_DATE;`;
 
 
+       
 
         const todayIntake = await pool.query(todaysIntakesQuery, [user_id]);
         console.log(todayIntake.rows)
@@ -530,9 +531,9 @@ exports.addFoodIntake = async (req, res) => {
             for (let i = 0; i < intakes.length; i++) {
                 const foodDetails = intakes[i].food_details;
                 if (foodDetails) {
-                    totalProtein += foodDetails.protein || 0;
-                    totalCarbs += foodDetails.carbs || 0;
-                    totalFats += foodDetails.fats || 0;
+                    totalProtein += foodDetails.protein * (intakes[i].quantity ? intakes[i].quantity:1) || 0;
+                    totalCarbs += foodDetails.carbs * (intakes[i].quantity ? intakes[i].quantity:1) || 0;
+                    totalFats += foodDetails.fats * (intakes[i].quantity ? intakes[i].quantity:1) || 0;
                 }
             }
         };
@@ -628,6 +629,42 @@ exports.getDailyConsumption = async (req,res)=>{
             )
         }
 
+        const query = `SELECT * FROM diet_plan Where user_id = $1 AND trash=$2 AND diet_plan_id=$3`;
+
+        let result = await pool.query(query, [user_id , false , diet_plan_id]);
+
+        if (result.rows[0]) {
+            result = result.rows[0]
+        }else{
+            result = null
+        }
+
+        let calories_needed;
+        let macrosRequired;
+        if (result) {
+            macros = fitness_calculator.macros(result.gender, result.age, result.height, result.weight, result.activity_status, result.purpose);
+            macros = macros.balancedDietPlan;
+            macrosRequired= macros;
+            let calories = fitness_calculator.calorieNeeds(result.gender, result.age, result.height, result.weight, result.activity_status)
+
+            if (calories) {
+                if (result.purpose == 'balance') {
+                    calories_needed = calories.balance
+                }
+                else if (result.purpose == 'mildWeightLoss') {
+                    calories_needed = calories.mildWeightLoss
+                }
+                else if (result.purpose == 'mildWeightGain') {
+                    calories_needed = calories.mildWeightGain
+                }
+                else if (result.purpose == 'heavyWeightLoss') {
+                    calories_needed = calories.heavyWeightLoss
+                }
+                else if (result.purpose == 'heavyWeightGain') {
+                    calories_needed = calories.heavyWeightGain
+                }
+            }
+        }
         
         
         const todaysIntakesQuery = `SELECT 
@@ -635,7 +672,7 @@ exports.getDailyConsumption = async (req,res)=>{
             ROW_TO_JSON(food.*) AS food_details 
           FROM 
             daily_food_intake 
-            JOIN food ON food.food_id = daily_food_intake.food_id        
+            LEFT OUTER JOIN food ON food.food_id = daily_food_intake.food_id        
            WHERE user_id = $1 AND diet_plan_id = $2 AND DATE(daily_food_intake.created_at) = CURRENT_DATE;`
 
 
@@ -650,13 +687,15 @@ exports.getDailyConsumption = async (req,res)=>{
         let totalProtein = 0;
         let totalCarbs = 0;
         let totalFats = 0;
+        let caloriesTaken = 0;
         if (intakes) {
             for (let i = 0; i < intakes.length; i++) {
                 const foodDetails = intakes[i].food_details;
                 if (foodDetails) {
-                    totalProtein += foodDetails.protein || 0;
-                    totalCarbs += foodDetails.carbs || 0;
-                    totalFats += foodDetails.fats || 0;
+                    totalProtein += foodDetails.protein * (intakes[i].quantity ? intakes[i].quantity:1) || 0;
+                    totalCarbs += foodDetails.carbs * (intakes[i].quantity ? intakes[i].quantity:1) || 0;
+                    totalFats += foodDetails.fats * (intakes[i].quantity ? intakes[i].quantity:1) || 0;
+                    caloriesTaken += foodDetails.energy_calories * (intakes[i].quantity ? intakes[i].quantity:1) || 0;
                 }
             }
         };
@@ -673,8 +712,13 @@ exports.getDailyConsumption = async (req,res)=>{
                 message : "Food Intake record of today",
                 status : false,
                 result : {
+                    macorsRequired : macrosRequired,
                     macrosTaken : macrosTaken ,
+                    caloreis_required : calories_needed,
+                    calories_consumed : caloriesTaken,
+                    diet_plan_details : result,
                     foodIntakesToday : intakes
+                    
                 },
                 
 
@@ -716,6 +760,46 @@ exports.getHistory = async (req,res)=>{
             )
         }
 
+
+        const query = `SELECT * FROM diet_plan Where user_id = $1 AND trash=$2 AND diet_plan_id=$3`;
+
+        let result = await pool.query(query, [user_id , false , diet_plan_id]);
+
+        if (result.rows[0]) {
+            result = result.rows[0]
+        }else{
+            result = null
+        }
+
+        let calories_needed;
+        let macrosRequired;
+        
+        if (result) {
+            macros = fitness_calculator.macros(result.gender, result.age, result.height, result.weight, result.activity_status, result.purpose);
+            macros = macros.balancedDietPlan;
+            macrosRequired= macros;
+            let calories = fitness_calculator.calorieNeeds(result.gender, result.age, result.height, result.weight, result.activity_status)
+
+            if (calories) {
+                if (result.purpose == 'balance') {
+                    calories_needed = calories.balance
+                }
+                else if (result.purpose == 'mildWeightLoss') {
+                    calories_needed = calories.mildWeightLoss
+                }
+                else if (result.purpose == 'mildWeightGain') {
+                    calories_needed = calories.mildWeightGain
+                }
+                else if (result.purpose == 'heavyWeightLoss') {
+                    calories_needed = calories.heavyWeightLoss
+                }
+                else if (result.purpose == 'heavyWeightGain') {
+                    calories_needed = calories.heavyWeightGain
+                }
+            }
+        }
+        
+
         
         
         const todaysIntakesQuery = `SELECT 
@@ -738,13 +822,17 @@ exports.getHistory = async (req,res)=>{
         let totalProtein = 0;
         let totalCarbs = 0;
         let totalFats = 0;
+        let caloriesTaken = 0;
+
         if (intakes) {
             for (let i = 0; i < intakes.length; i++) {
                 const foodDetails = intakes[i].food_details;
                 if (foodDetails) {
-                    totalProtein += foodDetails.protein || 0;
-                    totalCarbs += foodDetails.carbs || 0;
-                    totalFats += foodDetails.fats || 0;
+                    totalProtein += foodDetails.protein * (intakes[i].quantity ? intakes[i].quantity:1) || 0;
+                    totalCarbs += foodDetails.carbs * (intakes[i].quantity ? intakes[i].quantity:1) || 0;
+                    totalFats += foodDetails.fats * (intakes[i].quantity ? intakes[i].quantity:1) || 0;
+                    caloriesTaken += foodDetails.energy_calories * (intakes[i].quantity ? intakes[i].quantity:1) || 0;
+
                 }
             }
         };
@@ -762,7 +850,11 @@ exports.getHistory = async (req,res)=>{
                 status : true,
                 result : {
                     macrosTaken : macrosTaken ,
-                    foodIntakesToday : intakes
+                    macrosRequired : macrosRequired , 
+                    caloreis_required : calories_needed,
+                    calories_consumed : caloriesTaken,
+                    diet_plan_details : result,
+                    foodIntakes : intakes
                 },
                 
 

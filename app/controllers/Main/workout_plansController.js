@@ -1236,17 +1236,17 @@ exports.start_workout = async (req, res) => {
         }
 
 
-        const foundQuery = 'SELECT * FROM user_inActionWorkouts WHERE user_id = $1 AND workout_plan_id = $2';
-        const foundResult = await pool.query(foundQuery, [user_id, workout_plan_id]);
+        // const foundQuery = 'SELECT * FROM user_inActionWorkouts WHERE user_id = $1 AND workout_plan_id = $2';
+        // const foundResult = await pool.query(foundQuery, [user_id, workout_plan_id]);
 
-        if (foundResult.rowCount > 0) {
-            return (
-                res.json({
-                    message: "This User already started this workout",
-                    status: false
-                })
-            )
-        }
+        // if (foundResult.rowCount > 0) {
+        //     return (
+        //         res.json({
+        //             message: "This User already started this workout",
+        //             status: false
+        //         })
+        //     )
+        // }
 
         const query = 'INSERT INTO user_inActionWorkouts (user_id , workout_plan_id , status , time , created_at) VALUES ($1 , $2 , $3 , $4 , $5) RETURNING*';
         const result = await pool.query(query, [user_id, workout_plan_id, "inprogress" , time ,created_at]);
@@ -2237,7 +2237,7 @@ async function calculateCaloriesBurned(caloriesBurned, time, workoutTime) {
     const caloriesBurnedInWorkout = Math.round(caloriesPerSecond * totalWorkoutSeconds);
   
     return caloriesBurnedInWorkout;
-  }
+}
   
 
 // take user first workout date , like first ever time he started . 
