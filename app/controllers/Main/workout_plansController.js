@@ -987,10 +987,10 @@ exports.workoutPlansByCategory_id = async (req, res) => {
       WHERE e.workout_plan_id = we.workout_plan_id
     ) AS workout_plan_exersises
   FROM workout_plans we
-  WHERE we.category_id = $1;
+  WHERE we.category_id = $1 AND we.trash = $2;
 `;
 
-            result = await pool.query(query, [category_id]);
+            result = await pool.query(query, [category_id , false]);
 
         }
 
@@ -1041,9 +1041,9 @@ exports.workoutPlansByCategory_id = async (req, res) => {
               WHERE e.workout_plan_id = we.workout_plan_id
             ) AS workout_plan_exersises
           FROM workout_plans we
-          WHERE we.category_id = $3
+          WHERE we.category_id = $3 AND we.trash = $4
            LIMIT $1 OFFSET $2`
-            result = await pool.query(query, [limit, offset, category_id]);
+            result = await pool.query(query, [limit, offset, category_id , false]);
 
         }
 
@@ -1945,8 +1945,8 @@ exports.searchWorkoutPlan= async (req, res) => {
             )
         }
 
-        const query = `SELECT * FROM workout_plans WHERE workout_title ILIKE $1`;
-        let result = await pool.query(query , [name.concat("%")]);
+        const query = `SELECT * FROM workout_plans WHERE workout_title ILIKE $1 AND trash= $2`;
+        let result = await pool.query(query , [name.concat("%") , false]);
 
         if(result.rows){
             result = result.rows
