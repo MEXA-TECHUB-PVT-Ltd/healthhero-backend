@@ -9,7 +9,6 @@ exports.create_my_plan = async (req, res) => {
         const user_id = req.body.user_id;
         const plan_name = req.body.plan_name;
         const description = req.body.description;
-        const exersise_ids = req.body.exersise_ids;
         const created_at = req.body.created_at;
 
         if(!created_at || !user_id){
@@ -23,13 +22,12 @@ exports.create_my_plan = async (req, res) => {
 
 
 
-        const query = 'INSERT INTO user_plans (user_id ,plan_name,description, exersise_ids , created_at) VALUES ($1 , $2 , $3 , $4 , $5) RETURNING*'
+        const query = 'INSERT INTO user_plans (user_id ,plan_name,description , created_at) VALUES ($1 , $2 , $3 , $4) RETURNING*'
         const result = await pool.query(query , 
             [
                 user_id ? user_id : null,
                 plan_name ? plan_name : null,
                 description ?description : null,
-                exersise_ids ? exersise_ids : null,
                 created_at ? created_at : null
               
             ]);
@@ -146,36 +144,53 @@ exports.addExersise_in_myPlan= async (req, res) => {
     const client = await pool.connect();
     try {
         const user_id = req.body.user_id;
-        const plan_id = req.body.plan_id;
-        const exersise_id = req.body.exersise_id
+        const workout_plan_id = req.body.workout_plan_id;
+        let array = req.body.array;
 
+        let resultArray = [];
 
-        if (!user_id || !plan_id || !exersise_id) {
-            return (
-                res.json({
-                    message: "Please provide user_id , exersise_id , plan_id",
-                    status: false
-                })
-            )
+        for (let i = 0; i < array.length; i++) {
+            const element = array[i];
+            element.workout_plan_id = workout_plan_id
         }
 
-    
-        let query = 'UPDATE user_plans SET exersise_ids = ARRAY_APPEND(exersise_ids , $3) WHERE user_id = $1 AND workout_plan_id = $2 RETURNING*';
-        let values =[user_id , plan_id , exersise_id ];
+        const values = array.map(obj => [obj.exersise_id, obj.time, obj.reps, obj.workout_plan_id]);
+        console.log(values)
 
-       const result = await pool.query(query , values);
 
-        if (result.rows[0]) {
-            res.json({
-                message: "Appended exersise ids into previous",
+        for (let i = 0; i < values.length; i++) {
+            const element = values[i];
+
+            let foundQuuery = 'SELECT * FROM workout_plan_exersises WHERE exersise_id= $1 AND workout_plan_id = $2';
+            let foundResult = await pool.query(foundQuuery, [element[0], element[3]]);
+
+            console.log(foundResult.rows)
+            if (foundResult.rowCount > 0) {
+                return (res.json({
+                    message: `Exersise with exersise_id : ${element[0]} And workout_plan_id : ${element[3]} already exists`,
+                    status: 'false'
+                }));
+            }
+
+        }
+        for (let i = 0; i < values.length; i++) {
+            const element = values[i];
+            let query = 'INSERT INTO workout_plan_exersises (exersise_id , time , reps , workout_plan_id ) VALUES ($1 , $2 , $3 , $4) RETURNING*';
+            let result = await pool.query(query, element);
+            resultArray.push(result.rows[0])
+        }
+
+        if (resultArray) {
+            res.status(201).json({
+                message: "Exersises saved in database for user plan",
                 status: true,
-                result: result.rows[0]
+                result: resultArray
             })
         }
         else {
-            res.json({
-                message: "Could not add",
-                status: false,
+            res.status(400).json({
+                message: "Could not save",
+                status: false
             })
         }
 
@@ -303,20 +318,34 @@ exports.get_plan= async (req, res) => {
   SELECT
     up.*,
     (
-      SELECT json_agg(
-        json_build_object(
-          'exercise_id', e.exersise_id,
-          'title', e.title,
-          'description', e.description,
-          'animation', e.animation,
-          'video_link', e.video_link,
-          'created_at', e.created_at
+        SELECT json_agg(
+          json_build_object(
+            'exersise_id', e.exersise_id,
+            'workout_plan_exersise_id', e.workout_plan_exersise_id,
+              'reps' , e.reps,
+              'time' , e.time,
+              'trash' , e.trash,
+              'created_at' , e.created_at,
+              'updated_at' , e.updated_at,
+              'exersise_details' , (  SELECT 
+              json_build_object(
+                    'exersise_id', ex.exersise_id,
+                    'title', ex.title,
+                    'description' , ex.description,
+                    'animation' , ex.animation,
+                    'video_link' , ex.video_link,
+                    'trash' , ex.trash,
+                    'created_at' , ex.created_at,
+                    'updated_at' , ex.updated_at
+                )
+                FROM exersises ex
+                  WHERE ex.exersise_id = e.exersise_id
+              )
+          )
         )
-      )
-      FROM exersises e
-      WHERE e.exersise_id = ANY(up.exersise_ids)
-    ) AS exercise_details
-    , array_length(up.exersise_ids, 1) AS exercises_count
+        FROM workout_plan_exersises e
+        WHERE e.workout_plan_id = up.workout_plan_id
+      ) AS workout_plan_exersises
   FROM user_plans up
   WHERE up.user_id = $1 AND up.workout_plan_id = $2;
 `;
@@ -369,23 +398,37 @@ exports.getAllUserPlans = async (req, res) => {
         let result;
 
         if (!page || !limit) {
-            const query = `SELECT
+            const query = ` SELECT
             up.*,
             (
-              SELECT json_agg(
-                json_build_object(
-                  'exercise_id', e.exersise_id,
-                  'title', e.title,
-                  'description', e.description,
-                  'animation', e.animation,
-                  'video_link', e.video_link,
-                  'created_at', e.created_at
+                SELECT json_agg(
+                  json_build_object(
+                    'exersise_id', e.exersise_id,
+                    'workout_plan_exersise_id', e.workout_plan_exersise_id,
+                      'reps' , e.reps,
+                      'time' , e.time,
+                      'trash' , e.trash,
+                      'created_at' , e.created_at,
+                      'updated_at' , e.updated_at,
+                      'exersise_details' , (  SELECT 
+                      json_build_object(
+                            'exersise_id', ex.exersise_id,
+                            'title', ex.title,
+                            'description' , ex.description,
+                            'animation' , ex.animation,
+                            'video_link' , ex.video_link,
+                            'trash' , ex.trash,
+                            'created_at' , ex.created_at,
+                            'updated_at' , ex.updated_at
+                        )
+                        FROM exersises ex
+                          WHERE ex.exersise_id = e.exersise_id
+                      )
+                  )
                 )
-              )
-              FROM exersises e
-              WHERE e.exersise_id = ANY(up.exersise_ids)
-            ) AS exercise_details
-            , array_length(up.exersise_ids, 1) AS exercises_count
+                FROM workout_plan_exersises e
+                WHERE e.workout_plan_id = up.workout_plan_id
+              ) AS workout_plan_exersises
           FROM user_plans up
           WHERE up.user_id = $1`
             result = await pool.query(query , [user_id]);
@@ -396,23 +439,37 @@ exports.getAllUserPlans = async (req, res) => {
             limit = parseInt(limit);
             let offset= (parseInt(page)-1)* limit
 
-        const query = `SELECT
+        const query = ` SELECT
         up.*,
         (
-          SELECT json_agg(
-            json_build_object(
-              'exercise_id', e.exersise_id,
-              'title', e.title,
-              'description', e.description,
-              'animation', e.animation,
-              'video_link', e.video_link,
-              'created_at', e.created_at
+            SELECT json_agg(
+              json_build_object(
+                'exersise_id', e.exersise_id,
+                'workout_plan_exersise_id', e.workout_plan_exersise_id,
+                  'reps' , e.reps,
+                  'time' , e.time,
+                  'trash' , e.trash,
+                  'created_at' , e.created_at,
+                  'updated_at' , e.updated_at,
+                  'exersise_details' , (  SELECT 
+                  json_build_object(
+                        'exersise_id', ex.exersise_id,
+                        'title', ex.title,
+                        'description' , ex.description,
+                        'animation' , ex.animation,
+                        'video_link' , ex.video_link,
+                        'trash' , ex.trash,
+                        'created_at' , ex.created_at,
+                        'updated_at' , ex.updated_at
+                    )
+                    FROM exersises ex
+                      WHERE ex.exersise_id = e.exersise_id
+                  )
+              )
             )
-          )
-          FROM exersises e
-          WHERE e.exersise_id = ANY(up.exersise_ids)
-        ) AS exercise_details
-        , array_length(up.exersise_ids, 1) AS exercises_count
+            FROM workout_plan_exersises e
+            WHERE e.workout_plan_id = up.workout_plan_id
+          ) AS workout_plan_exersises
       FROM user_plans up
       WHERE up.user_id = $3 LIMIT $1 OFFSET $2`
         result = await pool.query(query , [limit , offset , user_id]);

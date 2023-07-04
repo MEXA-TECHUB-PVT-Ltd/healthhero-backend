@@ -157,13 +157,11 @@ CREATE TABLE IF NOT EXISTS user_plans(
   user_id INTEGER,
   plan_name TEXT,
   description TEXT,
-  exersise_ids INT[],
   status TEXT DEFAULT 'unpaid',
   trash BOOLEAN DEFAULT false,
   created_at TEXT,
   updated_at TIMESTAMP DEFAULT NOW()
 );
-
 
 
 CREATE TABLE IF NOT EXISTS water_tracker(
@@ -370,4 +368,23 @@ CREATE TABLE IF NOT EXISTS reminder(
   updated_at TIMESTAMP DEFAULT NOW()
 );
 
+
+CREATE TABLE IF NOT EXISTS subscription(
+  subscription_id INT NOT NULL DEFAULT nextval('my_sequence') PRIMARY KEY,
+  user_id INTEGER,
+  paid BOOLEAN DEFAULT true,
+  amount FLOAT , 
+  ephemeralKey TEXT,
+  stripe_subscription_id TEXT,
+  customer_Stripe_Id TEXT,
+  subscription_client_secret TEXT,
+  paymentIntent_Secret TEXT,
+  currency TEXT,
+  startingdate TEXT,
+  endDate TEXT,
+  priceId TEXT,
+  trash BOOLEAN DEFAULT false,
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW()
+);
 

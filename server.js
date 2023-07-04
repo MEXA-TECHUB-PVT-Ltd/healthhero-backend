@@ -61,6 +61,10 @@ app.get("/" , (req,res)=>{
   app.use("/food" , require("./app/routes/Main/FoodRoute"))
   app.use("/faq" , require("./app/routes/Main/faqRoute"))
   app.use("/height_weight" , require("./app/routes/Main/height_weightRoute"))
+  app.use("/payment" , require("./app/routes/Main/confirmPayment")) 
+  app.use("/subscription" , require("./app/routes/Main/subscriptionRoute")) 
+
+
 
 
 
