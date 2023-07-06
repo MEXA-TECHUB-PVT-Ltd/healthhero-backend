@@ -17,8 +17,12 @@ CREATE TABLE IF NOT EXISTS users (
   weight_unit TEXT,
   created_at TIMESTAMP DEFAULT NOW(),
   trash BOOLEAN DEFAULT false,
-  updated_at TIMESTAMP DEFAULT NOW()
+  updated_at TIMESTAMP DEFAULT NOW(),
+  subscribe_status BOOLEAN DEFAULT false
 );
+
+
+
 
 CREATE TABLE IF NOT EXISTS admins(
   admin_id INT NOT NULL DEFAULT nextval('my_sequence') PRIMARY KEY,
@@ -374,15 +378,11 @@ CREATE TABLE IF NOT EXISTS subscription(
   user_id INTEGER,
   paid BOOLEAN DEFAULT true,
   amount FLOAT , 
-  ephemeralKey TEXT,
   stripe_subscription_id TEXT,
   customer_Stripe_Id TEXT,
-  subscription_client_secret TEXT,
-  paymentIntent_Secret TEXT,
   currency TEXT,
   startingdate TEXT,
-  endDate TEXT,
-  priceId TEXT,
+  enddate TEXT,
   trash BOOLEAN DEFAULT false,
   created_at TIMESTAMP DEFAULT NOW(),
   updated_at TIMESTAMP DEFAULT NOW()

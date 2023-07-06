@@ -1,6 +1,8 @@
 const { Pool } = require('pg');
 require('dotenv').config();
 const fs = require('fs');
+const schedule = require('node-schedule');
+const axios = require('axios');
 
 
 console.log(process.env.USER_NAME)
@@ -28,16 +30,15 @@ pool.on('error', (err) => {
     } else {
       console.log('Connected to database successfully');
       console.log("Initializing Tables .....")
-      
       release();
     }
   });
 
   const initSql = fs.readFileSync("app/models/init.sql").toString();
 
-  pool.query(initSql , (err , result)=>{
+  pool.query(initSql , async (err , result)=>{
     if(!err){
-      console.log("All Database tables Initialilzed successfully : ")
+      console.log("All Database tables Initialilzed successfully : ");
     }
     else{
       console.log("Error Occurred While Initializing Database tables");

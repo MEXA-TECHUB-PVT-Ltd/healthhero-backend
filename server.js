@@ -1,11 +1,13 @@
 const express = require('express');
 const app = express();
-const {pool} = require('./app/config/db.config')
+require('dotenv').config()
+const stripe = require('stripe')(process.env.STRIPE_SECRET);
 
+const functions = require('./app/utils/stripePayFns');
+ const {sendEmail , updateSubscriptionStatus , getEmail , addSubscription , isWithinLast31Days ,getLastSubscription } = functions;
 
 const PORT = process.env.PORT || 3005;
 const bodyParser = require('body-parser');
-require('dotenv').config()
 // const auth = require('./app/middlewares/auth')
 
 
@@ -22,6 +24,129 @@ app.use(cors({
   methods: ['GET', 'POST', 'DELETE', 'UPDATE', 'PUT', 'PATCH']
 }));
 
+  //-----------------------------------------WEB Hooks Handled Here-----------------------------------------------------
+
+
+const endpointSecret = "whsec_e5efa915672267bc1eb79a94eea99f9ece0c0d98d5055be6645f684bddf6f499";
+  app.post('/hooks', express.raw({type: 'application/json'}), async(request, response) => {
+    const sig = request.headers['stripe-signature'];
+    const rawBody = request.body;
+  
+    let event;
+    try {
+      event = stripe.webhooks.constructEvent(rawBody, sig, endpointSecret);
+    } catch (err) {
+      console.log(err);
+      response.status(400).send(`Webhook Error: ${err.message}`);
+      return;
+    }
+  
+    // Handle the event
+    switch (event.type) {
+      case 'invoice.payment_failed':{
+        const invoicePaymentFailed = event.data.object;
+        console.log("payment_failed", invoicePaymentFailed);
+        // Then define and call a function to handle the event invoice.payment_failed
+
+        let customer_id = invoicePaymentFailed.customer;
+        console.log(customer_id);
+        if(!customer_id){
+          console.log("no any customer_id found")
+          return false
+        }
+
+        let email = await getEmail(customer_id);
+        if(!email) {
+          console.log("Email not found for this customer id");
+          return false
+        }
+        console.log("email", email);
+
+        const getLatestSubscription = await getLastSubscription(customer_id);
+        console.log(getLatestSubscription);
+        let shouldSubscribe = false;
+        if(getLatestSubscription){
+          if(getLatestSubscription.startingdate && getLatestSubscription.endDate){
+            const checkvalidity = await isWithinLast31Days(getLatestSubscription.startingdate, getLatestSubscription.endDate);
+            console.log(checkvalidity);
+            if(checkvalidity){
+              console.log("Found that latest subscription is in last month so we will keep the subscribe status true here")
+            }
+            else{
+              shouldSubscribe = false;
+              if(shouldSubscribe==false){
+                isSubscribeStatuUpdated = updateSubscriptionStatus(email , false);
+                if(isSubscribeStatuUpdated){
+                  console.log("Subscribe status turns to false");
+                }
+                const isSendEmail = await sendEmail(email , "Subscription Expired , Renewe Subscription to enjoy premium features");
+                if(isSendEmail){
+                  console.log("subscription expired email sent to user");
+                }
+              }
+            }
+          }
+        }
+        else{
+            console.log("No any previous subscription found and payment failed")
+        }
+      }
+        
+        break;
+      case 'invoice.payment_succeeded':{
+        const invoicePaymentSucceeded = event.data.object;
+        console.log("payment_succeeded", invoicePaymentSucceeded);
+
+        let customer_id = invoicePaymentSucceeded.customer;
+        console.log(customer_id);
+        if(!customer_id){
+          console.log("no any customer_id found")
+          return false
+        }
+        let email = await getEmail(customer_id);
+        if(!email) {
+          console.log("Email not found for this customer id");
+          return false
+        }
+        console.log("email", email);
+        let isSend =await sendEmail(email, "Payment Successfull , Enjoy using app");
+        if(!isSend){
+          console.log("Error in sending email")
+          return false;
+        }
+        //set subscription status
+        let isUpdated = await updateSubscriptionStatus(email , true);
+        if(!isUpdated) {
+          console.log("Could not update subscription status")
+        }
+        let startingdate = new Date(Date.now());
+        let endDate = new Date(new Date().setMonth(new Date().getMonth() + 1));
+        startingdate=startingdate.toISOString().split("T")[0];
+        endDate=endDate.toISOString().split("T")[0];
+
+        console.log(startingdate)
+
+        let storeRecord = await addSubscription(email , invoicePaymentSucceeded.subscription , customer_id, "usd" , startingdate , endDate , invoicePaymentSucceeded.amount_paid);
+        if(storeRecord) {
+          console.log("added subscription")
+        }else{
+          console.log("failed to add subscription")
+        }
+      }
+        // Then define and call a function to handle the event invoice.payment_succeeded
+        break;
+      // ... handle other event types
+      default:
+        console.log(`Unhandled event type ${event.type}`);
+    }
+  
+    // Return a 200 response to acknowledge receipt of the event
+    response.send();
+  });
+  
+
+
+  //------------------------------------------Web Hooks ended----------------------------------------------------
 
 // parse requests of content-type - application/json
 app.use(express.json());
@@ -63,14 +188,6 @@ app.get("/" , (req,res)=>{
   app.use("/height_weight" , require("./app/routes/Main/height_weightRoute"))
   app.use("/payment" , require("./app/routes/Main/confirmPayment")) 
   app.use("/subscription" , require("./app/routes/Main/subscriptionRoute")) 
-
-
-
-
-
-
-
-
 
 
 //  app.use(auth)

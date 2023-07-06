@@ -295,7 +295,27 @@ exports.viewProfile = async(req,res)=>{
          }
 
 
-         const query = 'SELECT * FROM users WHERE user_id = $1';
+         const query = `SELECT
+         u.user_id,
+         u.user_name,
+         u.email,
+         u.password,
+         u.focused_areas,
+         u.gender,
+         u.device_id,
+         u.block,
+         u.height,
+         u.weight,
+         u.height_unit,
+         u.weight_unit,
+         u.created_at,
+         u.trash,
+         u.updated_at,
+         u.subscribe_status
+       FROM
+         users u
+       WHERE
+         u.trash = false AND u.user_id = $1`;
          const result = await pool.query(query , [user_id]);
 
 
@@ -332,7 +352,28 @@ exports.getAllUsers = async (req, res) => {
         let result;
 
         if (!page || !limit) {
-            const query = 'SELECT * FROM users'
+            const query = `SELECT
+            u.user_id,
+            u.user_name,
+            u.email,
+            u.password,
+            u.focused_areas,
+            u.gender,
+            u.device_id,
+            u.block,
+            u.height,
+            u.weight,
+            u.height_unit,
+            u.weight_unit,
+            u.created_at,
+            u.trash,
+            u.updated_at,
+            u.subscribe_status
+
+            FROM
+            users u
+          WHERE
+            u.trash = false`
            result = await pool.query(query);
         }
 
@@ -340,7 +381,28 @@ exports.getAllUsers = async (req, res) => {
             limit = parseInt(limit);
             let offset= (parseInt(page)-1)* limit;
 
-            const query = 'SELECT * FROM users LIMIT $1 OFFSET $2'
+            const query = `SELECT
+            u.user_id,
+            u.user_name,
+            u.email,
+            u.password,
+            u.focused_areas,
+            u.gender,
+            u.device_id,
+            u.block,
+            u.height,
+            u.weight,
+            u.height_unit,
+            u.weight_unit,
+            u.created_at,
+            u.trash,
+            u.updated_at,
+            u.subscribe_status
+          FROM
+            users u
+          WHERE
+            u.trash = false
+            LIMIT $1 OFFSET $2`
             result = await pool.query(query , [limit , offset]);
         }   
       
