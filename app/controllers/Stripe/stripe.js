@@ -242,10 +242,24 @@ exports.initiatePayment =async (req,res)=>{
             )
           }
 
-          const customer = await stripe.customers.create({
-            email: userEmail
-              });
+          let customer;
+          const findCustomer = await stripe.customers.list({
+           email : userEmail,
+          });
 
+          console.log(findCustomer.data.length);
+          if(findCustomer.data.length > 0) {
+            console.log("inside")
+            customer= findCustomer.data[0];
+          }
+          else{
+            customer = await stripe.customers.create({
+                email: userEmail
+            });
+    
+          }
+           
+          console.log(customer.id)
           if(!customer){return (res.json({message : "Could not create customer due to internal issue" , status : false}))}
           
           const ephemeralKey = await stripe.ephemeralKeys.create(
@@ -353,3 +367,44 @@ exports.cancelSubscription= async (req, res) => {
       }
 
 }
+
+exports.checkSubscription = async(req,res)=>{
+    const client = await pool.connect();
+    try {
+
+        const customer_Stripe_Id = req.query.customer_Stripe_Id;
+        if(!customer_Stripe_Id){
+            return(
+                res.json ({
+                    message: "Please Provide a customer stripe id",
+                    status : false
+                })
+            )
+        }
+        const subscriptions = await stripe.subscriptions.list({
+            customer: customer_Stripe_Id,
+            limit: 1,
+          });
+        
+          const subscription = subscriptions.data[0];
+        
+          if (subscription.status === 'active') {
+            res.json({ message: 'Subscription is Active!', status: true });
+          } else {
+            res.json({ message: 'Subscription is not active!', status: false });
+          }
+    }
+    catch (err) {
+        console.log(err)
+        res.json({
+            message: "Error",
+            status: false,
+            error: err.message
+        })
+    }
+    finally {
+        client.release();
+      }
+
+}
+
