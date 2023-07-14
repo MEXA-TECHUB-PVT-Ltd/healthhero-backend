@@ -95,6 +95,7 @@ const endpointSecret = "whsec_e5efa915672267bc1eb79a94eea99f9ece0c0d98d5055be664
         break;
       case 'invoice.payment_succeeded':{
         const invoicePaymentSucceeded = event.data.object;
+        console.log(invoicePaymentSucceeded.date.object);
         console.log("payment_succeeded", invoicePaymentSucceeded);
 
         let customer_id = invoicePaymentSucceeded.customer;
@@ -115,6 +116,8 @@ const endpointSecret = "whsec_e5efa915672267bc1eb79a94eea99f9ece0c0d98d5055be664
           return false;
         }
         //set subscription status
+
+        if(invoicePaymentSucceeded.amount_paid){
         let isUpdated = await updateSubscriptionStatus(email , true);
         if(!isUpdated) {
           console.log("Could not update subscription status")
@@ -133,6 +136,13 @@ const endpointSecret = "whsec_e5efa915672267bc1eb79a94eea99f9ece0c0d98d5055be664
           console.log("failed to add subscription")
         }
       }
+      else{
+        let isUpdated = await updateSubscriptionStatus(email , true);
+        if(!isUpdated) {
+          console.log("Could not update subscription status")
+        }
+      }
+    }
         // Then define and call a function to handle the event invoice.payment_succeeded
         break;
       // ... handle other event types
