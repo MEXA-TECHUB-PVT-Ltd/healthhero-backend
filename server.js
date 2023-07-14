@@ -27,14 +27,14 @@ app.use(cors({
   //-----------------------------------------WEB Hooks Handled Here-----------------------------------------------------
 
 
-const endpointSecret = "whsec_e5efa915672267bc1eb79a94eea99f9ece0c0d98d5055be6645f684bddf6f499";
+const endpointSecret = "whsec_6GGgYLAgahUH1vXQJLjYYlfQuXltcRON";
   app.post('/hooks', express.raw({type: 'application/json'}), async(request, response) => {
     const sig = request.headers['stripe-signature'];
     const rawBody = request.body;
   
     let event;
     try {
-      event = stripe.webhooks.constructEvent(rawBody, sig, endpointSecret);
+      event = stripe.webhooks.constructEvent(rawBody, sig, process.env.STRIPE_WEBHOOK_SECRET);
     } catch (err) {
       console.log(err);
       response.status(400).send(`Webhook Error: ${err.message}`);
