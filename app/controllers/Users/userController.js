@@ -3,7 +3,16 @@ const {pool}  = require("../../config/db.config");
 const Joi = require("joi");
 const jwt = require("jsonwebtoken");
 const bcrypt = require('bcrypt');
+const nodemailer = require("nodemailer");
+const {thankYouEmailBody} = require('../../utils/emailOTPBody')
+const transporter = nodemailer.createTransport({
+    service: "gmail",
+    auth: {
+        user: process.env.EMAIL_USERNAME,
+        pass: process.env.EMAIL_PASSWORD,
+    },
 
+});
 
 exports.registerUser = async (req, res, next) => {
     const client = await pool.connect();
@@ -46,13 +55,28 @@ exports.registerUser = async (req, res, next) => {
         console.log(result.rows[0])
 
         if(result.rows[0]){
-            const createSubscriptionQuery =   `INSERT INTO user_subscription (user_id , subscription_status , add_removal_status) VALUES ($1 , $2 , $3) RETURNING *`;
+            const createSubscriptionQuery = `INSERT INTO user_subscription (user_id , subscription_status , add_removal_status) VALUES ($1 , $2 , $3) RETURNING *`;
             const subResult = await pool.query(createSubscriptionQuery , [result.rows[0].user_id , false ,false] )
             if(subResult.rows[0]){
                 console.log("user subscription created automatically while signing up")
             }
         }
         if(result.rows[0]){
+            let sendEmailResponse = await transporter.sendMail({
+                from: process.env.EMAIL_USERNAME,
+                to: email,
+                subject: 'Welcome to Health Hero - Let\'s Get Started!',
+                html: thankYouEmailBody("Health-Hero", result.rows[0].user_name)
+    
+            });
+
+            if(!sendEmailResponse){
+                return res.json({
+                    message: "User Has been registered successfully but email was not sent",
+                    status : true,
+                    result:result.rows[0]
+                })
+            }
             res.json({
                 message: "User Has been registered successfully",
                 status : true,

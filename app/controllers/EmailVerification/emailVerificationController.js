@@ -1,6 +1,6 @@
 const { pool } = require("../../config/db.config")
-const nodemailer = require("nodemailer");;
-const emailOTPBody = require("../../utils/emailOTPBody")
+const nodemailer = require("nodemailer");
+const {emailOTPBody} = require("../../utils/emailOTPBody")
 
 
 const transporter = nodemailer.createTransport({
