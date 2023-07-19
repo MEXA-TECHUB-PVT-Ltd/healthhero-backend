@@ -31,19 +31,19 @@ exports.registerUser = async (req, res, next) => {
         }
         
 
-        const found_email_query = 'SELECT * FROM users WHERE email = $1'
-        const emailExists = await pool.query(found_email_query , [email])
+        // const found_email_query = 'SELECT * FROM users WHERE email = $1'
+        // const emailExists = await pool.query(found_email_query , [email])
         
 
 
-        if (emailExists.rowCount>0) {
-            return (
-                res.status(400).json({
-                    message: "user with this email already exists",
-                    status: false
-                })
-            )
-        }
+        // if (emailExists.rowCount>0) {
+        //     return (
+        //         res.status(400).json({
+        //             message: "user with this email already exists",
+        //             status: false
+        //         })
+        //     )
+        // }
 
 
         const query = 'INSERT INTO users (email , password) VALUES ($1 , $2) RETURNING*'
