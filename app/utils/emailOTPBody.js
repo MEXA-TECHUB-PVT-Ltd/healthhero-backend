@@ -19,164 +19,107 @@ function emailOTPBody(otp, companyName, color) {
   </div>`
 }
 function thankYouEmailBody(companyName, recipient_name) {
-  return `
-  <!DOCTYPE html>
-<html>
+  return `<!DOCTYPE html>
+<html lang="en">
 
 <head>
-    <title>Welcome Email</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
     <style>
         * {
             margin: 0;
             padding: 0;
         }
 
-        .div0 {
-            background-color: rgb(236, 236, 236);
-            font-family: 'Open Sans', sans-serif;
-            font-size: 16px;
+        .nav {
+            height: 65px;
+            background-color: rgb(49, 132, 255);
+            position: relative;
         }
 
-        .div1 {
+        .nav img {
+            position: relative;
+            margin-top: 8px;
+            width: 9%;
+            height: 75%;
+        }
+
+        .bg-img {
             width: 100%;
-            height: 110px;
-            background-color: orange;
-            position: relative;
+            height: 220px;
         }
 
-        h1 {
-            font-size: 24px;
+        .body-div {
+            padding: 3% 10%;
         }
 
-        p {
-            margin-bottom: 10px;
-            padding: 10px 0px;
-            word-spacing: 0.1em;
-            font-size: 1rem;
+        .header {
+            padding-top: 1%;
+            padding-bottom: 1%;
+            font-style: italic;
         }
 
-        a {
-            color: #000;
-            font-size: 1rem;
-            /* text-decoration: none; */
-        }
-
-        .div1-img {
-            position: relative;
-            height: 100%;
-            width: 5%;
-            padding-top: 10px;
-        }
-
-        .div2-container {
-            display: grid;
-            grid-template-columns: 20% 60% 20%;
-        }
-
-        .grid-div1 {
-            height: 110px;
-            background-color: orange;
-        }
-
-        .div2 {
-            position: relative;
-            margin-top: 0px;
-            width: 70%;
+        .main {
+            max-width: 420px;
+            margin-top: 2%;
+            margin-bottom: 1%;
             background-color: white;
-            margin-left: 0px;
-            padding: 20px 20px;
             text-align: justify;
         }
 
-        .div3 {
-            position: relative;
-            height: 100px;
-            width: 60%;
-            margin-top: 50px;
-            margin-left: 20%;
-            padding: 20px 20px;
-            text-align: justify;
-            background-color: rgb(255, 234, 194);
+        .body-class {
+            background-color: #00000012;
         }
-
-        .button {
-            background-color: #0072C6;
-            color: #fff;
-            padding: 10px 20px;
-            border-radius: 5px;
+        .last-div{
+            margin-top: 5%;
+        }
+        .last-img{
             cursor: pointer;
         }
-
-        table {
-            border-collapse: collapse;
-            width: 100%;
-        }
-
-        th,
-        td {
+        .btn{
+            margin-top: 2%;
+            height: 50px;
+            width: 160px;
+            border-radius: 80px;
             border: 0px;
-            padding: 8px;
-            text-align: center;
-            font-weight: 500;
+            background-color: rgb(49, 132, 255);
+            color: white;
+            font-weight: 600;
         }
     </style>
 </head>
 
-<body>
-    <div class="div0">
-        <div class="div1">
-            <center><img class="div1-img" src="https://drive.google.com/file/d/1SJbTAoHmmUUq_uQ5Bu5oL6JWniGt9R-b/view?usp=sharing"></img></center>
-        </div>
-        <table>
-            <tr>
-                <th class="grid-div1"></th>
-                <th class="div2">
-                    <center>
-                        <h1>Welcome!</h1>
-                    </center>
-
-                </th>
-                <th class="grid-div1"></th>
-            </tr>
-            <tr>
-                <th></th>
-                <th class="div2">
-                    <p>
-                        Welcome to Health Hero! We're thrilled to have you on board and want to extend a warm welcome to our
-                        growing community. Get ready to unlock a world of possibilities and make the most of your experience
-                        with our app.
-                    </p>
-                    <p>At Health Hero, our mission is to keep you fit and healthy with daily weekly workout plans. Whether
-                        you're looking to stay smart, strong and healthy, or finding a good nutrition plan, we've got you
-                        covered!</p>
-                    <p><b>we provide you with:</b></p>
-                    <p>1. 7x4 challenges</p>
-                    <p>2. 7x4 challenges</p>
-                    <p>3. Diet plans</p>
-                    <p>4. Daily water consumption tracker</p>
-                    <p>5. BMI calculation for fitness</p>
-                    <p>6. Reminders for workout</p>
-                    <p>We're thrilled to have you as part of our community, and we can't wait to see what you'll accomplish
-                        with Health Hero. Join us on this journey as we strive to make your workout experience even better.
-                    </p>
-                    <p>Thank you once again for choosing Health Hero. We're excited to have you here!</p>
-                    <p>Cheers,</p>
-                    <p>The Health Hero Team</p>
-                </th>
-                <th></th>
-            </tr>
-        </table>
-    
-        <div class="div3">
-            <center>
-                <p>Need more help?</p>
+<body class="body-class">
+    <center><div class="main">
+        <div class="nav">
+            <center><img src="https://staging-healthhero-be.mtechub.com/admin_profile_images/1689760004459--logo.png" />
             </center>
-            <center><a href="mailto:gmail@gmail.com">We're here, ready to talk</a></center>
-        </div><br><br>
-    </div>
+        </div>
+        <img class="bg-img" src="https://staging-healthhero-be.mtechub.com/admin_profile_images/1690200614974--chest_intermediate.jpg" />
+        <div class="body-div">
+            <h2 class="header">Welcome, Dear User</h2>
+            <p>
+                Thank you for registering with <b>Health Heros.</b>
+            </p><br/>
+            <p>At Health Hero, our mission is to keep you fit and healthy with daily weekly workout plans. Whether
+                you're looking to stay smart, strong and healthy, or finding a good nutrition plan, we've got you
+                covered!</p>
+            <p>Please click the link below to visit our website</p>
+            <center><a href="http://www.healthhero.club" target="_blank"><button class="btn">Visit Website</button></a></center>
+            <p class="header"><b>Cheers,</b></p>
+            <p>The Health Hero Team</p>
+        </div>
+    </div></center>
+    <center>
+        <p><b>Download Our App Now</b></p>
+    </center>
+    <center><div class="last-div">
+        <img class="last-img" height="15%" width="15%" src="https://staging-healthhero-be.mtechub.com/admin_profile_images/1690196807681--appstore.jpg" />
+        <a href="https://play.google.com/store/apps/details?id=com.healthheromtechub" target="_blank"><img class="last-img" height="16%" width="16%" src="https://staging-healthhero-be.mtechub.com/admin_profile_images/1690196760645--playstore%20(2).png" /></a>
+    </div></center>
 </body>
 
-</html>
-    `
+</html>`
 }
 module.exports = { emailOTPBody, thankYouEmailBody }
