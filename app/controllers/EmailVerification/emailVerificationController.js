@@ -135,13 +135,24 @@ const sendOTPVerificationEmail = async (email, res) => {
             to: email,
             subject: 'Verify Account',
             html: emailOTPBody(year, `<center>
-            <h2 class="header">Reset Your Password</h2><br />
-        </center>
-        <center><img class="first-img" height="10%" width="10%"
+            <h2 style="padding-top: 1%; padding-bottom: 1%; color: #FF6700; font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;">Reset Your Password</h2><br />
+        </center>   
+        <center><img style="margin-bottom: 5%;" height="20%" width="20%"
             src="https://staging-healthhero-be.mtechub.com/admin_profile_images/1690278968788--icons8-reset-password-66.png" />
         </center>
-        <p class="ptag-class">Thank you for choosing Health Heros. Use the following OTP to complete your procedures.</p>
-        <center><br/><button class="otp-btn">${otp}</button></center>`
+        <p style="color: rgb(122, 122, 122);
+        margin-bottom: 20px;">Thank you for choosing Health Hero. Use the following OTP to complete your procedures.</p>
+        <center><br/><button style="margin-top: 1%;
+            height: 35px;
+            width: 160px;
+            border-radius: 10px;
+            border: 0px;
+            background-color: transparent;
+            color: #0A1F58;
+            font-size:28px;
+            font-weight: 800;
+            cursor: pointer !important;
+            letter-spacing: 0.5em;">${otp}</button></center>`
             )
         });
         console.log(sendEmailResponse);

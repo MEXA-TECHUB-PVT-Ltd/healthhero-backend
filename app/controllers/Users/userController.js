@@ -70,22 +70,35 @@ exports.registerUser = async (req, res, next) => {
                 to: email,
                 subject: 'Welcome to Health Hero - Let\'s Get Started!',
                 html: emailOTPBody(year, `<center>
-                <h2 class="header">Welcome, Dear User</h2><br />
+                <h2 style="padding-top: 1%;
+                padding-bottom: 1%;
+                color: #FF6700;
+                font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;">Welcome, Dear User</h2><br />
             </center>
-            <center><img class="first-img" height="10%" width="10%"
+            <center><img style="margin-bottom: 5%;" height="20%" width="20%"
                 src="https://staging-healthhero-be.mtechub.com/admin_profile_images/1690277900112--icons8-checkmark-480.png" />
             </center>
-            <p class="ptag-class">
-                Thank you for registering with <b>Health Heros.</b>
+            <p style="color: rgb(122, 122, 122);
+            margin-bottom: 20px;">
+                Thank you for registering with <b>Health Hero.</b>
             </p><br />
-            <p class="ptag-class">At Health Hero, our mission is to keep you fit and healthy with daily weekly workout plans.
+            <p style="color: rgb(122, 122, 122);
+            margin-bottom: 20px;">At Health Hero, our mission is to keep you fit and healthy with daily weekly workout plans.
                 Whether
                 you're looking to stay smart, strong and healthy, or finding a good nutrition plan, we've got
                 you
                 covered!</p><br />
             <br />
-            <center><a href="http://www.healthhero.club" target="_blank"><button class="btn">Visit
-                        Website</button></a></center>`)
+            <center><a style="margin-top: 1%;
+                padding: 10px 40px;
+                text-decoration: none !important;
+                border-radius: 10px;
+                border: 0px;
+                background-color: #FF6700;
+                color: white !important;
+                font-weight: 600;
+                cursor: pointer !important;" href="http://www.healthhero.club" target="_blank">Visit
+                        Website</a></center>`)
 
             });
 
