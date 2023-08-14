@@ -1,9 +1,18 @@
-const {pool}  = require("../../config/db.config");
+const { pool } = require("../../config/db.config");
 
 const Joi = require("joi");
 const jwt = require("jsonwebtoken");
 const bcrypt = require('bcrypt');
+const nodemailer = require("nodemailer");
+const { emailOTPBody } = require('../../utils/emailOTPBody')
+const transporter = nodemailer.createTransport({
+    service: "gmail",
+    auth: {
+        user: process.env.EMAIL_USERNAME,
+        pass: process.env.EMAIL_PASSWORD,
+    },
 
+});
 
 exports.registerUser = async (req, res, next) => {
     const client = await pool.connect();
@@ -20,14 +29,14 @@ exports.registerUser = async (req, res, next) => {
                 })
             )
         }
-        
+
 
         const found_email_query = 'SELECT * FROM users WHERE email = $1'
-        const emailExists = await pool.query(found_email_query , [email])
-        
+        const emailExists = await pool.query(found_email_query, [email])
 
 
-        if (emailExists.rowCount>0) {
+
+        if (emailExists.rowCount > 0) {
             return (
                 res.status(400).json({
                     message: "user with this email already exists",
@@ -42,27 +51,74 @@ exports.registerUser = async (req, res, next) => {
         const hashPassword = await bcrypt.hash(req.body.password, salt);
 
 
-        const result = await pool.query(query , [email , hashPassword]);
+        const result = await pool.query(query, [email, hashPassword]);
         console.log(result.rows[0])
 
-        if(result.rows[0]){
-            const createSubscriptionQuery =   `INSERT INTO user_subscription (user_id , subscription_status , add_removal_status) VALUES ($1 , $2 , $3) RETURNING *`;
-            const subResult = await pool.query(createSubscriptionQuery , [result.rows[0].user_id , false ,false] )
-            if(subResult.rows[0]){
+        if (result.rows[0]) {
+            const createSubscriptionQuery = `INSERT INTO user_subscription (user_id , subscription_status , add_removal_status) VALUES ($1 , $2 , $3) RETURNING *`;
+            const subResult = await pool.query(createSubscriptionQuery, [result.rows[0].user_id, false, false])
+            if (subResult.rows[0]) {
                 console.log("user subscription created automatically while signing up")
             }
         }
-        if(result.rows[0]){
+        if (result.rows[0]) {
+            let ts = Date.now();
+            let date_time = new Date(ts);
+            let year = date_time.getFullYear();
+            let sendEmailResponse = await transporter.sendMail({
+                from: process.env.EMAIL_USERNAME,
+                to: email,
+                subject: 'Welcome to Health Hero - Let\'s Get Started!',
+                html: emailOTPBody(year, `<center>
+                <h2 style="padding-top: 1%;
+                padding-bottom: 1%;
+                color: #FF6700;
+                font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;">Welcome, Dear User</h2><br />
+            </center>
+            <center><img style="margin-bottom: 5%;" height="20%" width="20%"
+                src="https://staging-healthhero-be.mtechub.com/admin_profile_images/1690277900112--icons8-checkmark-480.png" />
+            </center>
+            <p style="color: rgb(122, 122, 122);
+            margin-bottom: 20px;">
+                Thank you for registering with <b>Health Hero.</b>
+            </p><br />
+            <p style="color: rgb(122, 122, 122);
+            margin-bottom: 20px;">At Health Hero, our mission is to keep you fit and healthy with daily weekly workout plans.
+                Whether
+                you're looking to stay smart, strong and healthy, or finding a good nutrition plan, we've got
+                you
+                covered!</p><br />
+            <br />
+            <center><a style="margin-top: 1%;
+                padding: 10px 40px;
+                text-decoration: none !important;
+                border-radius: 10px;
+                border: 0px;
+                background-color: #FF6700;
+                color: white !important;
+                font-weight: 600;
+                cursor: pointer !important;" href="http://www.healthhero.club" target="_blank">Visit
+                        Website</a></center>`)
+
+            });
+
+            if (!sendEmailResponse) {
+                return res.json({
+                    message: "User Has been registered successfully but email was not sent",
+                    status: true,
+                    result: result.rows[0]
+                })
+            }
             res.json({
                 message: "User Has been registered successfully",
-                status : true,
-                result:result.rows[0]
+                status: true,
+                result: result.rows[0]
             })
         }
-        else{
+        else {
             res.json({
                 message: "Could not Register user",
-                status :false,
+                status: false,
             })
         }
 
@@ -74,9 +130,9 @@ exports.registerUser = async (req, res, next) => {
             status: false,
             error: err.message
         })
-    }finally {
+    } finally {
         client.release();
-      }
+    }
 
 }
 exports.login = async (req, res) => {
@@ -84,7 +140,7 @@ exports.login = async (req, res) => {
         const email = req.body.email;
         let password = req.body.password;
 
-  
+
         if (!email || !password) {
             return (
                 res.status(400).json({
@@ -95,7 +151,7 @@ exports.login = async (req, res) => {
         }
 
         const query = 'SELECT * FROM users WHERE email = $1';
-        const foundResult = await pool.query(query  , [email]);
+        const foundResult = await pool.query(query, [email]);
 
         console.log(foundResult)
 
@@ -138,16 +194,16 @@ exports.login = async (req, res) => {
         })
     }
 }
-exports.updateProfile= async (req,res)=>{
-    try{
+exports.updateProfile = async (req, res) => {
+    try {
         const user_id = req.body.user_id;
 
-         if(!user_id){
-            return(res.json({message : "Please provide user_id" , status : false}))
-         }
+        if (!user_id) {
+            return (res.json({ message: "Please provide user_id", status: false }))
+        }
 
-        const user_name= req.body.user_name;
-        const gender = req.body.gender ;
+        const user_name = req.body.user_name;
+        const gender = req.body.gender;
         const focusedAreas = req.body.focusedAreas;
         const device_id = req.body.device_id;
         const height = req.body.height;
@@ -156,26 +212,26 @@ exports.updateProfile= async (req,res)=>{
         const weight_unit = req.body.weight_unit;
 
 
-        if(height_unit){
-            if(height_unit == 'in' || height_unit == 'ft'){
+        if (height_unit) {
+            if (height_unit == 'in' || height_unit == 'ft') {
             }
-            else{return(res.json({message: "height unit can only be in or ft" , status :false}))}
-        }
-       
-        if(weight_unit){
-            if(weight_unit == 'kg' || weight_unit == 'gm'){
-            }
-            else{return(res.json({message: "weight unit can only be kg or gm" , status :false}))}
+            else { return (res.json({ message: "height unit can only be in or ft", status: false })) }
         }
 
+        if (weight_unit) {
+            if (weight_unit == 'kg' || weight_unit == 'gm') {
+            }
+            else { return (res.json({ message: "weight unit can only be kg or gm", status: false })) }
+        }
 
-        if(gender){
-            if(gender=='male' || gender == 'female' || gender =='other'){
+
+        if (gender) {
+            if (gender == 'male' || gender == 'female' || gender == 'other') {
 
             }
-            else{
-                return(res.json({
-                    message : "gender must be male , femal "
+            else {
+                return (res.json({
+                    message: "gender must be male , femal "
                 }))
             }
         }
@@ -183,49 +239,49 @@ exports.updateProfile= async (req,res)=>{
 
         let query = 'UPDATE users SET ';
         let index = 2;
-        let values =[user_id];
+        let values = [user_id];
 
 
-        if(user_name){
-            query+= `user_name = $${index} , `;
+        if (user_name) {
+            query += `user_name = $${index} , `;
             values.push(user_name)
-            index ++
+            index++
         }
-        if(gender){
-            query+= `gender = $${index} , `;
+        if (gender) {
+            query += `gender = $${index} , `;
             values.push(gender)
-            index ++
+            index++
         }
-        if(focusedAreas){
-            query+= `focused_areas = $${index} , `;
+        if (focusedAreas) {
+            query += `focused_areas = $${index} , `;
             values.push(focusedAreas)
-            index ++
-        }  
-        if(device_id){
-            query+= `device_id = $${index} , `;
+            index++
+        }
+        if (device_id) {
+            query += `device_id = $${index} , `;
             values.push(device_id)
-            index ++
+            index++
         }
 
-        if(height){
-            query+= `height = $${index} , `;
+        if (height) {
+            query += `height = $${index} , `;
             values.push(height)
-            index ++
+            index++
         }
-        if(weight){
-            query+= `weight = $${index} , `;
+        if (weight) {
+            query += `weight = $${index} , `;
             values.push(weight)
-            index ++
+            index++
         }
-        if(height_unit){
-            query+= `height_unit = $${index} , `;
+        if (height_unit) {
+            query += `height_unit = $${index} , `;
             values.push(height_unit)
-            index ++
-        }  
-        if(weight_unit){
-            query+= `weight_unit = $${index} , `;
+            index++
+        }
+        if (weight_unit) {
+            query += `weight_unit = $${index} , `;
             values.push(weight_unit)
-            index ++
+            index++
         }
 
         query += 'WHERE user_id = $1 RETURNING*'
@@ -234,22 +290,22 @@ exports.updateProfile= async (req,res)=>{
         console.log(query);
 
 
-      const result = await pool.query(query , values);
+        const result = await pool.query(query, values);
 
-      if(result.rows[0]){
-        res.json({
-            message: "Profile Updated successfully",
-            status : true ,
-            result : result.rows[0]
-        })
-      }
-      else{
-        res.json({
-            message: "Profile could not be updated successfully",
-            status : false,
-        })
-      }
-      
+        if (result.rows[0]) {
+            res.json({
+                message: "Profile Updated successfully",
+                status: true,
+                result: result.rows[0]
+            })
+        }
+        else {
+            res.json({
+                message: "Profile could not be updated successfully",
+                status: false,
+            })
+        }
+
     }
     catch (err) {
         console.log(err)
@@ -260,22 +316,22 @@ exports.updateProfile= async (req,res)=>{
         })
     }
 }
-exports.updatePassword = async(req,res)=>{
-    try{
-        const email = req.body.email ;
+exports.updatePassword = async (req, res) => {
+    try {
+        const email = req.body.email;
         const password = req.body.password;
 
         const query = 'UPDATE users SET password = $1 WHERE email = $2 RETURNING*';
         const salt = await bcrypt.genSalt(10);
         const hashPassword = await bcrypt.hash(password, salt);
 
-        const result = await pool.query(query , [hashPassword , email]);
+        const result = await pool.query(query, [hashPassword, email]);
 
-        if(result.rows[0]){
-            res.json({message: "Update successfully" , status :true , result : result.rows[0]})
+        if (result.rows[0]) {
+            res.json({ message: "Update successfully", status: true, result: result.rows[0] })
         }
-        else{
-            res.json({message: "Could not Update" , status : false })
+        else {
+            res.json({ message: "Could not Update", status: false })
         }
     }
     catch (err) {
@@ -287,15 +343,15 @@ exports.updatePassword = async(req,res)=>{
         })
     }
 }
-exports.viewProfile = async(req,res)=>{
-    try{
+exports.viewProfile = async (req, res) => {
+    try {
         const user_id = req.query.user_id;
-        if(!user_id){
-            return(res.json({message : "Please provide user_id" , status : false}))
-         }
+        if (!user_id) {
+            return (res.json({ message: "Please provide user_id", status: false }))
+        }
 
 
-         const query = `SELECT
+        const query = `SELECT
          u.user_id,
          u.user_name,
          u.email,
@@ -316,23 +372,23 @@ exports.viewProfile = async(req,res)=>{
          users u
        WHERE
          u.trash = false AND u.user_id = $1`;
-         const result = await pool.query(query , [user_id]);
+        const result = await pool.query(query, [user_id]);
 
 
-         if(result.rowCount>0){
+        if (result.rowCount > 0) {
             res.json({
                 message: "User profile fetched",
-                status : true,
-                result : result.rows[0]
+                status: true,
+                result: result.rows[0]
             })
-         }
-         else{
+        }
+        else {
             res.json({
                 message: "Could not Fetch profile , may be the user_id is wrong",
-                status : false
+                status: false
             })
-         }
-        
+        }
+
     }
     catch (err) {
         console.log(err)
@@ -374,12 +430,12 @@ exports.getAllUsers = async (req, res) => {
             users u
           WHERE
             u.trash = false`
-           result = await pool.query(query);
+            result = await pool.query(query);
         }
 
-        if(page && limit){
+        if (page && limit) {
             limit = parseInt(limit);
-            let offset= (parseInt(page)-1)* limit;
+            let offset = (parseInt(page) - 1) * limit;
 
             const query = `SELECT
             u.user_id,
@@ -403,9 +459,9 @@ exports.getAllUsers = async (req, res) => {
           WHERE
             u.trash = false
             LIMIT $1 OFFSET $2`
-            result = await pool.query(query , [limit , offset]);
-        }   
-      
+            result = await pool.query(query, [limit, offset]);
+        }
+
         if (result.rows) {
             res.json({
                 message: "Fetched",
@@ -430,10 +486,10 @@ exports.getAllUsers = async (req, res) => {
     }
     finally {
         client.release();
-      }
+    }
 
 }
-exports.deleteUser= async (req, res) => {
+exports.deleteUser = async (req, res) => {
     const client = await pool.connect();
     try {
         const user_id = req.query.user_id;
@@ -446,16 +502,16 @@ exports.deleteUser= async (req, res) => {
             )
         }
         const query = 'DELETE FROM users WHERE user_id = $1 RETURNING *';
-        const result = await pool.query(query , [user_id]);
+        const result = await pool.query(query, [user_id]);
 
-        if(result.rowCount>0){
+        if (result.rowCount > 0) {
             res.status(200).json({
                 message: "Deletion successfull",
                 status: true,
                 deletedRecord: result.rows[0]
             })
         }
-        else{
+        else {
             res.status(404).json({
                 message: "Could not delete . Record With this Id may not found or req.body may be empty",
                 status: false,
@@ -472,19 +528,19 @@ exports.deleteUser= async (req, res) => {
     }
     finally {
         client.release();
-      }
+    }
 }
-exports.updateBlockStatus = async(req,res)=>{
-    try{
-        const user_id = req.query.user_id ;
+exports.updateBlockStatus = async (req, res) => {
+    try {
+        const user_id = req.query.user_id;
         const block_status = req.query.block_status;
 
 
-        if(!user_id && !block_status){
-            return(
+        if (!user_id && !block_status) {
+            return (
                 res.json({
                     message: "User Id and block status must be provided",
-                    status :false
+                    status: false
                 })
             )
         }
@@ -492,13 +548,13 @@ exports.updateBlockStatus = async(req,res)=>{
 
         const query = 'UPDATE users SET block = $1 WHERE user_id = $2 RETURNING*';
 
-        const result = await pool.query(query , [block_status , user_id]);
+        const result = await pool.query(query, [block_status, user_id]);
 
-        if(result.rows[0]){
-            res.json({message: "Update successfully" , status :true , result : result.rows[0]})
+        if (result.rows[0]) {
+            res.json({ message: "Update successfully", status: true, result: result.rows[0] })
         }
-        else{
-            res.json({message: "Could not Update" , status : false })
+        else {
+            res.json({ message: "Could not Update", status: false })
         }
     }
     catch (err) {
@@ -543,12 +599,12 @@ exports.getUsersByMontsAndYear = async (req, res) => {
           FROM users
           GROUP BY year, month
           ORDER BY year DESC, month DESC;`
-           result = await pool.query(query);
+            result = await pool.query(query);
         }
 
-        if(page && limit){
+        if (page && limit) {
             limit = parseInt(limit);
-            let offset= (parseInt(page)-1)* limit;
+            let offset = (parseInt(page) - 1) * limit;
 
             const query = `SELECT 
             extract(year from created_at) as year,
@@ -573,9 +629,9 @@ exports.getUsersByMontsAndYear = async (req, res) => {
           FROM users
           GROUP BY year, month
           ORDER BY year DESC, month DESC LIMIT $1 OFFSET $2`
-            result = await pool.query(query , [limit , offset]);
-        }   
-      
+            result = await pool.query(query, [limit, offset]);
+        }
+
         if (result.rows) {
             res.json({
                 message: "Fetched",
@@ -600,7 +656,7 @@ exports.getUsersByMontsAndYear = async (req, res) => {
     }
     finally {
         client.release();
-      }
+    }
 
 }
 
@@ -618,16 +674,16 @@ exports.deleteTemporarily = async (req, res) => {
         }
 
         const query = 'UPDATE users SET trash=$2 WHERE user_id = $1 RETURNING *';
-        const result = await pool.query(query , [user_id , true]);
+        const result = await pool.query(query, [user_id, true]);
 
-        if(result.rowCount>0){
+        if (result.rowCount > 0) {
             res.status(200).json({
                 message: "Temporaily Deleted",
                 status: true,
                 Temporarily_deletedRecord: result.rows[0]
             })
         }
-        else{
+        else {
             res.status(404).json({
                 message: "Could not delete . Record With this Id may not found or req.body may be empty",
                 status: false,
@@ -644,9 +700,9 @@ exports.deleteTemporarily = async (req, res) => {
     }
     finally {
         client.release();
-      }
+    }
 }
- 
+
 exports.recover_record = async (req, res) => {
     const client = await pool.connect();
     try {
@@ -660,16 +716,16 @@ exports.recover_record = async (req, res) => {
             )
         }
         const query = 'UPDATE users SET trash=$2 WHERE user_id = $1 RETURNING *';
-        const result = await pool.query(query , [user_id , false]);
+        const result = await pool.query(query, [user_id, false]);
 
-        if(result.rowCount>0){
+        if (result.rowCount > 0) {
             res.status(200).json({
                 message: "Recovered",
                 status: true,
                 recovered_record: result.rows[0]
             })
         }
-        else{
+        else {
             res.status(404).json({
                 message: "Could not recover . Record With this Id may not found or req.body may be empty",
                 status: false,
@@ -686,24 +742,24 @@ exports.recover_record = async (req, res) => {
     }
     finally {
         client.release();
-      }
+    }
 }
- 
+
 exports.getAllTrashRecords = async (req, res) => {
     const client = await pool.connect();
     try {
 
         const query = 'SELECT * FROM users WHERE trash = $1';
-        const result = await pool.query(query , [true]);
+        const result = await pool.query(query, [true]);
 
-        if(result.rowCount>0){
+        if (result.rowCount > 0) {
             res.status(200).json({
                 message: "Recovered",
                 status: true,
                 trashed_records: result.rows
             })
         }
-        else{
+        else {
             res.status(404).json({
                 message: "Could not find trash records",
                 status: false,
@@ -720,11 +776,11 @@ exports.getAllTrashRecords = async (req, res) => {
     }
     finally {
         client.release();
-      }
+    }
 }
 
 
-exports.updateSubscribeStatus= async (req, res) => {
+exports.updateSubscribeStatus = async (req, res) => {
     const client = await pool.connect();
     try {
 
@@ -732,47 +788,58 @@ exports.updateSubscribeStatus= async (req, res) => {
         const subscription_status = req.body.subscription_status;
         const created_at = req.body.created_at;
 
-        if(!subscription_status  || !user_id){
-            return(
+        if (!subscription_status || !user_id) {
+            return (
                 res.json({
                     message: "subscription status and user_id must be provided",
-                    status : false
+                    status: false
                 })
             )
         }
 
-           
+
         let query = 'UPDATE user_subscription SET ';
         let index = 2;
-        let values =[user_id];
+        let values = [user_id];
 
-        
-        if(subscription_status){
-            query+= `subscription_status = $${index} , `;
+
+        if (subscription_status) {
+            query += `subscription_status = $${index} , `;
             values.push(subscription_status)
-            index ++
+            index++
         }
 
-        if(created_at){
-            query+= `created_at = $${index} , `;
+        if (created_at) {
+            query += `created_at = $${index} , `;
             values.push(created_at)
-            index ++
+            index++
         }
 
         query += 'WHERE user_id = $1 RETURNING*'
         query = query.replace(/,\s+WHERE/g, " WHERE");
         console.log(query);
-      
-        const result = await pool.query(query , values)
-        if(result.rowCount>0){
-            res.status(200).json({
-                message: "Updated subscription status",
-                status: true,
-                result: result.rows
-            })
+
+        const result = await pool.query(query, values)
+        if (result.rowCount > 0) {
+            const query1 = 'UPDATE users SET subscribe_status = $1 WHERE user_id=$2 RETURNING *'
+            const result1 = await pool.query(query1, [true, user_id]);
+            if(result1.rowCount > 0 )
+            {
+                return res.status(200).json({
+                    message: "Updated subscription status",
+                    status: true,
+                    result: result.rows
+                })
+            }
+            else{
+                return res.status(404).json({
+                    message: "Unable to update, make sure that while use is signed up",
+                    status: false,
+                })
+            }
         }
-        else{
-            res.status(404).json({
+        else {
+            return res.status(404).json({
                 message: "Unable to update, make sure that while use is signed up",
                 status: false,
             })
@@ -788,7 +855,7 @@ exports.updateSubscribeStatus= async (req, res) => {
     }
     finally {
         client.release();
-      }
+    }
 }
 
 exports.getUserSubscribedDetails = async (req, res) => {
@@ -796,11 +863,11 @@ exports.getUserSubscribedDetails = async (req, res) => {
     try {
         const user_id = req.query.user_id;
 
-        if(!user_id){
-            return(
+        if (!user_id) {
+            return (
                 res.json({
                     message: "user_id must be provided",
-                    status : false
+                    status: false
                 })
             )
         }
@@ -838,16 +905,16 @@ exports.getUserSubscribedDetails = async (req, res) => {
       ;
       ;
       `;
-        const result = await pool.query(query , [user_id]);
+        const result = await pool.query(query, [user_id]);
 
-        if(result.rowCount>0){
+        if (result.rowCount > 0) {
             res.status(200).json({
                 message: "Fethced",
                 status: true,
                 result: result.rows[0].records[0]
             })
         }
-        else{
+        else {
             res.status(404).json({
                 message: "Could not find",
                 status: false,
@@ -864,7 +931,7 @@ exports.getUserSubscribedDetails = async (req, res) => {
     }
     finally {
         client.release();
-      }
+    }
 }
 
 exports.getSubscribedUsers = async (req, res) => {
@@ -913,16 +980,16 @@ exports.getSubscribedUsers = async (req, res) => {
     ;
 
       `;
-        const result = await pool.query(query , [true]);
+        const result = await pool.query(query, [true]);
 
-        if(result.rowCount>0){
+        if (result.rowCount > 0) {
             res.status(200).json({
                 message: "All subscribed users ",
                 status: true,
                 result: result.rows[0].json_agg
             })
         }
-        else{
+        else {
             res.status(404).json({
                 message: "Could not find",
                 status: false,
@@ -939,10 +1006,10 @@ exports.getSubscribedUsers = async (req, res) => {
     }
     finally {
         client.release();
-      }
+    }
 }
 
-exports.updateAdRemovalStatus= async (req, res) => {
+exports.updateAdRemovalStatus = async (req, res) => {
     const client = await pool.connect();
     try {
 
@@ -950,47 +1017,47 @@ exports.updateAdRemovalStatus= async (req, res) => {
         const add_removal_status = req.body.add_removal_status;
         const created_at = req.body.created_at;
 
-        if(!add_removal_status  || !user_id){
-            return(
+        if (!add_removal_status || !user_id) {
+            return (
                 res.json({
                     message: " add_removal_status and user_id must be provided",
-                    status : false
+                    status: false
                 })
             )
         }
 
-           
+
         let query = 'UPDATE user_subscription SET ';
         let index = 2;
-        let values =[user_id];
+        let values = [user_id];
 
-        
-        if(add_removal_status){
-            query+= `add_removal_status = $${index} , `;
+
+        if (add_removal_status) {
+            query += `add_removal_status = $${index} , `;
             values.push(add_removal_status)
-            index ++
+            index++
         }
 
-        if(created_at){
-            query+= `created_at = $${index} , `;
+        if (created_at) {
+            query += `created_at = $${index} , `;
             values.push(created_at)
-            index ++
+            index++
         }
 
         query += 'WHERE user_id = $1 RETURNING*'
         query = query.replace(/,\s+WHERE/g, " WHERE");
         console.log(query);
-      
-        const result = await pool.query(query , values)
 
-        if(result.rowCount>0){
+        const result = await pool.query(query, values)
+
+        if (result.rowCount > 0) {
             res.status(200).json({
                 message: "Updated add removal status",
                 status: true,
                 result: result.rows
             })
         }
-        else{
+        else {
             res.status(404).json({
                 message: "Could not updated. Make sure that user is signed up previously",
                 status: false,
@@ -1007,7 +1074,7 @@ exports.updateAdRemovalStatus= async (req, res) => {
     }
     finally {
         client.release();
-      }
+    }
 }
 
 

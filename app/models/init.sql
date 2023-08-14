@@ -387,4 +387,14 @@ CREATE TABLE IF NOT EXISTS subscription(
   created_at TIMESTAMP DEFAULT NOW(),
   updated_at TIMESTAMP DEFAULT NOW()
 );
+CREATE TABLE IF NOT EXISTS contact_form(
+  contact_from_id INT NOT NULL DEFAULT nextval('my_sequence') PRIMARY KEY,
+  name TEXT,
+  email TEXT,
+  phone TEXT , 
+  message TEXT,
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW()
+);
+
 

@@ -198,7 +198,7 @@ app.get("/" , (req,res)=>{
   app.use("/height_weight" , require("./app/routes/Main/height_weightRoute"))
   app.use("/payment" , require("./app/routes/Main/confirmPayment")) 
   app.use("/subscription" , require("./app/routes/Main/subscriptionRoute")) 
-
+  app.use("/contactUs" , require("./app/routes/Main/contactUs")) 
 
 //  app.use(auth)
 

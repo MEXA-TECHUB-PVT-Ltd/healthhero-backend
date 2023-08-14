@@ -13,7 +13,7 @@ module.exports = (req, res, next) => {
       )
      }
 
-    if(!req.query.current_user_id){
+    if(!req.body.current_user_id){
       return (
         res.json({
           message: "please provide current_user_id for authorization purpose",
@@ -44,7 +44,7 @@ module.exports = (req, res, next) => {
             }
             else if(decoded){
                 console.log(decoded)
-              if(decoded.id != req.query.current_user_id){
+              if(decoded.id != req.body.current_user_id){
                 return (
                   res.status(401).json({
                     message: "This user is un authorized",

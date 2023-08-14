@@ -150,7 +150,7 @@ exports.getProductPricings = async (req, res) => {
         const prices = await stripe.prices.list({
             product: product_id,
         });
-
+        console.log(prices);
         if (prices.data) {
             res.json({
                 message: "All Prices of given product is : ",
@@ -184,7 +184,7 @@ exports.getProducts = async (req, res) => {
     try {
         const products = await stripe.products.list({
         });
-
+        console.log(products);
         if (products.data) {
             res.json({
                 message: "All products",
@@ -331,7 +331,7 @@ exports.initiatePayment = async (req, res) => {
     try {
 
         const { userEmail, user_id, price_id } = req.body;
-
+        
         if (!userEmail || !price_id || !user_id) {
             return (
                 res.json({
