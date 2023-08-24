@@ -504,11 +504,111 @@ exports.deleteUser = async (req, res) => {
         const query = 'DELETE FROM users WHERE user_id = $1 RETURNING *';
         const result = await pool.query(query, [user_id]);
 
+
+        const query1 = 'DELETE FROM liked_exersises_of_user WHERE user_id = $1 RETURNING *';
+        const result1 = await pool.query(query1, [user_id]);
+        const query2 = 'DELETE FROM user_likes_workouts WHERE user_id = $1 RETURNING *';
+        const result2 = await pool.query(query2, [user_id]);
+        const query3 = 'DELETE FROM user_inActionWorkouts WHERE user_id = $1 RETURNING *';
+        const result3 = await pool.query(query3, [user_id]);
+        const query4 = 'DELETE FROM countdowns WHERE user_id = $1 RETURNING *';
+        const result4 = await pool.query(query4, [user_id]);
+        const query5 = 'DELETE FROM rest_times WHERE user_id = $1 RETURNING *';
+        const result5 = await pool.query(query5, [user_id]);
+        const query6 = 'DELETE FROM week_goals WHERE user_id = $1 RETURNING *';
+        const result6 = await pool.query(query6, [user_id]);
+        const query7 = 'DELETE FROM user_plans WHERE user_id = $1 RETURNING *';
+        const result7 = await pool.query(query7, [user_id]);
+        const query8 = 'DELETE FROM water_tracker WHERE user_id = $1 RETURNING *';
+        const result8 = await pool.query(query8, [user_id]);
+        const query9 = 'DELETE FROM water_tracker_records WHERE user_id = $1 RETURNING *';
+        const result9 = await pool.query(query9, [user_id]);
+        const query10 = 'DELETE FROM user_inAction_sevByFour WHERE user_id = $1 RETURNING *';
+        const result10 = await pool.query(query10, [user_id]);
+        const query11 = 'DELETE FROM diet_plan WHERE user_id = $1 RETURNING *';
+        const result11 = await pool.query(query11, [user_id]);
+        const query12 = 'DELETE FROM daily_food_intake WHERE user_id = $1 RETURNING *';
+        const result12 = await pool.query(query12, [user_id]);
+        const query13 = 'DELETE FROM user_subscription WHERE user_id = $1 RETURNING *';
+        const result13 = await pool.query(query13, [user_id]);
+        const query14 = 'DELETE FROM feedbacks WHERE user_id = $1 RETURNING *';
+        const result14 = await pool.query(query14, [user_id]);
+        const query15 = 'DELETE FROM workout_reviews WHERE user_id = $1 RETURNING *';
+        const result15 = await pool.query(query15, [user_id]);
+        const query16 = 'DELETE FROM user_weight WHERE user_id = $1 RETURNING *';
+        const result16 = await pool.query(query16, [user_id]);
+        const query17 = 'DELETE FROM user_height WHERE user_id = $1 RETURNING *';
+        const result17 = await pool.query(query17, [user_id]);
+        const query18 = 'DELETE FROM reminder WHERE user_id = $1 RETURNING *';
+        const result18 = await pool.query(query18, [user_id]);
+        const query19 = 'DELETE FROM subscription WHERE user_id = $1 RETURNING *';
+        const result19 = await pool.query(query19, [user_id]);
+        let deletedEntries = 'user entries deleted alog with user are '
+        if(result1.rowCount>0){
+            deletedEntries+=' liked_exersises_of_user,'
+        }
+        if(result1.rowCount>0){
+            deletedEntries+=' user_likes_workouts,'
+        }
+        if(result2.rowCount>0){
+            deletedEntries+=' user_inActionWorkouts,'
+        }
+        if(result3.rowCount>0){
+            deletedEntries+=' countdowns,'
+        }
+        if(result4.rowCount>0){
+            deletedEntries+=' rest_times,'
+        }
+        if(result5.rowCount>0){
+            deletedEntries+=' week_goals,'
+        }
+        if(result6.rowCount>0){
+            deletedEntries+=' user_plans,'
+        }
+        if(result7.rowCount>0){
+            deletedEntries+=' water_tracker,'
+        }
+        if(result8.rowCount>0){
+            deletedEntries+=' water_tracker_records,'
+        }
+        if(result9.rowCount>0){
+            deletedEntries+=' user_inAction_sevByFour,'
+        }
+        if(result10.rowCount>0){
+            deletedEntries+=' diet_plan,'
+        }
+        if(result11.rowCount>0){
+            deletedEntries+=' daily_food_intake,'
+        }
+        if(result12.rowCount>0){
+            deletedEntries+=' user_subscription,'
+        }
+        if(result13.rowCount>0){
+            deletedEntries+=' feedbacks,'
+        }
+        if(result14.rowCount>0){
+            deletedEntries+=' workout_reviews,'
+        }
+        if(result15.rowCount>0){
+            deletedEntries+=' user_weight,'
+        }
+        if(result16.rowCount>0){
+            deletedEntries+=' user_height,'
+        }
+        if(result17.rowCount>0){
+            deletedEntries+=' reminder,'
+        }
+        if(result18.rowCount>0){
+            deletedEntries+=' subscription,'
+        }
+
+
         if (result.rowCount > 0) {
             res.status(200).json({
                 message: "Deletion successfull",
                 status: true,
-                deletedRecord: result.rows[0]
+                result: result.rows[0],
+                deletedRecord: deletedEntries
             })
         }
         else {
