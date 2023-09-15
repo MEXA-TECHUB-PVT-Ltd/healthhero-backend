@@ -48,7 +48,9 @@ CREATE TABLE IF NOT EXISTS otpStored(
 CREATE TABLE IF NOT EXISTS workout_categories(
   workout_category_id INT NOT NULL DEFAULT nextval('my_sequence') PRIMARY KEY ,
   category_name  TEXT ,
-  trash BOOLEAN DEFAULT false
+  trash BOOLEAN DEFAULT false,
+  updated_at TIMESTAMP DEFAULT NOW(),
+  created_at TIMESTAMP DEFAULT NOW()
 );
 
 
